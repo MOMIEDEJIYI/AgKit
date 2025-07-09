@@ -1,4 +1,5 @@
 import sys
+import os
 from PyQt5.QtWidgets import (
     QApplication, QWidget, QHBoxLayout, QVBoxLayout,
     QListWidget, QTextEdit, QLineEdit, QPushButton, QLabel
@@ -7,6 +8,10 @@ from PyQt5.QtCore import Qt
 from conversation.manager import ConversationManager
 from rpc_handler import handle_rpc_request
 from methods.worker_thread import WorkerThread
+
+def load_stylesheet(path: str) -> str:
+    with open(path, "r", encoding="utf-8") as f:
+        return f.read()
 
 class ChatWindow(QWidget):
     def __init__(self):
@@ -155,6 +160,9 @@ class ChatWindow(QWidget):
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
+    style_path = os.path.join(os.path.dirname(__file__), "assets", "style.qss")
+    stylesheet = load_stylesheet(style_path)
+    app.setStyleSheet(stylesheet)
     window = ChatWindow()
     window.resize(900, 600)
     window.show()
