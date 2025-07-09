@@ -51,3 +51,10 @@ class ConversationManager:
         path = os.path.join(self.history_dir, self.current_session["file"])
         with open(path, "w", encoding="utf-8") as f:
             json.dump(self.current_session, f, ensure_ascii=False, indent=2)
+
+    def delete_session(self, file_name: str):
+        path = os.path.join(self.history_dir, file_name)
+        if os.path.exists(path):
+            os.remove(path)
+        if self.current_session and self.current_session["file"] == file_name:
+            self.current_session = None

@@ -32,6 +32,11 @@ class ChatWindow(QWidget):
         # 右侧对话布局
         right_layout = QVBoxLayout()
 
+        # 在定义完 right_layout 之后，创建并插入删除按钮
+        self.delete_button = QPushButton("删除会话")
+        right_layout.insertWidget(0, self.delete_button)
+        self.delete_button.clicked.connect(self.on_delete_session)
+
         # 对话显示区
         self.chat_display = QTextEdit()
         self.chat_display.setReadOnly(True)
@@ -60,6 +65,7 @@ class ChatWindow(QWidget):
         items = self.session_list.findItems(current_file, Qt.MatchFlag.MatchExactly)
         if items:
             self.session_list.setCurrentItem(items[0])
+
 
     def load_history(self):
         self.chat_display.clear()
@@ -117,6 +123,35 @@ class ChatWindow(QWidget):
         self.input_edit.clear()
         self.send_button.setEnabled(True)
         self.input_edit.setEnabled(True)
+
+    # 实现删除槽函数
+    def on_delete_session(self):
+        current_item = self.session_list.currentItem()
+        if not current_item:
+            return
+        file_name = current_item.text()
+
+        # 删除会话文件
+        self.manager.delete_session(file_name)  # 你需要在 ConversationManager 实现此方法删除文件和管理内存
+
+        # 从列表中移除
+        row = self.session_list.row(current_item)
+        self.session_list.takeItem(row)
+
+        # 切换到其他会话或新建默认会话
+        sessions = self.manager.list_sessions()
+        if sessions:
+            self.manager.switch_session(sessions[0])
+            self.load_history()
+            items = self.session_list.findItems(sessions[0], Qt.MatchFlag.MatchExactly)
+            if items:
+                self.session_list.setCurrentItem(items[0])
+        else:
+            # 没有会话了就新建一个
+            file_name = self.manager.create_session("你是遵守 JSON-RPC 2.0 协议的智能助手，返回符合规范的 JSON-RPC 请求。")
+            self.session_list.addItem(file_name)
+            self.manager.switch_session(file_name)
+            self.load_history()
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
