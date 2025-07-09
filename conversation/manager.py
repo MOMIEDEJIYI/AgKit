@@ -1,0 +1,53 @@
+# conversation/manager.py
+import os
+import json
+from datetime import datetime
+
+class ConversationManager:
+    def __init__(self, history_dir="conversation/history"):
+        self.history_dir = history_dir
+        os.makedirs(self.history_dir, exist_ok=True)
+        self.current_session = None
+        self.sessions = self._load_sessions()
+
+    def _load_sessions(self):
+        files = os.listdir(self.history_dir)
+        return sorted([f for f in files if f.endswith(".json")])
+
+    def create_session(self, system_prompt: str):
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        file_name = f"session_{timestamp}.json"
+        path = os.path.join(self.history_dir, file_name)
+        self.current_session = {
+            "file": file_name,
+            "history": [{"role": "system", "content": system_prompt}],
+            "rpc_id": 1
+        }
+        self._save()
+        return file_name
+
+    def switch_session(self, file_name: str):
+        path = os.path.join(self.history_dir, file_name)
+        with open(path, "r", encoding="utf-8") as f:
+            self.current_session = json.load(f)
+
+    def get_history(self):
+        return self.current_session["history"]
+
+    def add_message(self, role, content):
+        self.current_session["history"].append({"role": role, "content": content})
+        self._save()
+
+    def get_next_id(self):
+        rpc_id = self.current_session["rpc_id"]
+        self.current_session["rpc_id"] += 1
+        self._save()
+        return rpc_id
+
+    def list_sessions(self):
+        return self._load_sessions()
+
+    def _save(self):
+        path = os.path.join(self.history_dir, self.current_session["file"])
+        with open(path, "w", encoding="utf-8") as f:
+            json.dump(self.current_session, f, ensure_ascii=False, indent=2)
