@@ -7,7 +7,7 @@ from PyQt5.QtWidgets import (
 from PyQt5.QtCore import Qt
 from conversation.manager import ConversationManager
 from rpc_handler import handle_rpc_request
-from methods.worker_thread import WorkerThread
+from tools.worker_thread import WorkerThread
 
 def load_stylesheet(path: str) -> str:
     with open(path, "r", encoding="utf-8") as f:

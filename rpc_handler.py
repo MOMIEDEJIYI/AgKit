@@ -1,9 +1,9 @@
 import re
 import json
-from methods.create_file import create_file, create_files
-from methods.read_file import read_file, read_files, read_folder, read_related_files, find_imported_files, list_files
-from methods.delete_file import delete_file, delete_files
-from methods.execute_command import execute_command
+from tools.create_file import create_file, create_files
+from tools.read_file import read_file, read_files, read_folder, read_related_files, find_imported_files, list_files
+from tools.delete_file import delete_file, delete_files
+from tools.execute_command import execute_command
 
 def extract_json_from_text(text: str) -> str:
     # 匹配 ```json ... ``` 或 ``` ... ``` 代码块内容
