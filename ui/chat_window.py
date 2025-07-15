@@ -52,6 +52,12 @@ class ChatWindow(QWidget):
         input_layout.addWidget(self.send_button)
         right_layout.addLayout(input_layout)
 
+        self.cancel_button = QPushButton("取消执行")
+        self.cancel_button.setEnabled(False)
+        right_layout.insertWidget(1, self.cancel_button)
+        self.cancel_button.clicked.connect(self.on_cancel)
+
+
         main_layout.addLayout(right_layout)
 
         self.session_list.currentItemChanged.connect(self.on_session_changed)
@@ -147,10 +153,37 @@ class ChatWindow(QWidget):
 
         self.send_button.setEnabled(False)
         self.input_edit.setEnabled(False)
+        self.cancel_button.setEnabled(True)
 
         self.thread = WorkerThread(history)
         self.thread.finished.connect(self.on_agent_response)
+        self.thread.error.connect(self.on_agent_error)
+        self.thread.thinking.connect(self.show_thinking_message)
         self.thread.start()
+
+    def on_cancel(self):
+        if hasattr(self, "thread") and self.thread.isRunning():
+            self.thread.stop()
+            self.cancel_button.setEnabled(False)
+            self.chat_display.append("🛑 已取消当前任务\n")
+    def show_thinking_message(self, msg):
+        self.chat_display.append(msg + "\n")
+
+    def on_agent_response(self, final_response):
+        self.manager.add_message("assistant", final_response)
+        self.load_history()
+        self.send_button.setEnabled(True)
+        self.input_edit.setEnabled(True)
+        self.input_edit.clear()
+        self.cancel_button.setEnabled(False)
+
+    def on_agent_error(self, error_msg):
+        self.manager.add_message("assistant", error_msg)
+        self.load_history()
+        self.send_button.setEnabled(True)
+        self.input_edit.setEnabled(True)
+        self.input_edit.clear()
+        self.cancel_button.setEnabled(False)
 
     def on_agent_response(self, first_response):
         print("Agent response:", first_response)

@@ -7,10 +7,10 @@ def handle_rpc_request(raw_text: str) -> dict | None:
         json_str = utils.extract_json_from_text(raw_text)
         parsed = json.loads(json_str)
 
-        # 提取 jsonrpc 内容
+        # 检查是否是 JSON-RPC 请求
         request = parsed["jsonrpc"] if "jsonrpc" in parsed and isinstance(parsed["jsonrpc"], dict) else parsed
 
-        # ✅ 忽略响应结构
+        # 判断是请求还是响应
         if "method" not in request:
             return None
 
@@ -30,7 +30,7 @@ def handle_rpc_request(raw_text: str) -> dict | None:
                 "id": request_id
             }
 
-        # 执行方法
+        # 调用方法
         if isinstance(params, dict):
             result = handler(params)
         elif isinstance(params, list):
@@ -38,14 +38,13 @@ def handle_rpc_request(raw_text: str) -> dict | None:
         else:
             result = handler(params)
 
-        # 校验结果
         if not isinstance(result, dict):
             raise ValueError(f"工具函数返回值必须是 dict，当前类型: {type(result)}")
         if "content" not in result or "done" not in result:
             raise ValueError("工具函数返回的结果必须包含 'content' 和 'done' 字段")
 
         if request_id is None:
-            return None  # 通知类调用，无返回
+            return None  # 通知不返回响应
 
         return {
             "jsonrpc": "2.0",
