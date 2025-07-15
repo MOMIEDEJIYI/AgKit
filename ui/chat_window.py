@@ -48,15 +48,14 @@ class ChatWindow(QWidget):
         input_layout = QHBoxLayout()
         self.input_edit = QLineEdit()
         self.send_button = QPushButton("发送")
-        input_layout.addWidget(self.input_edit)
-        input_layout.addWidget(self.send_button)
-        right_layout.addLayout(input_layout)
-
         self.cancel_button = QPushButton("取消执行")
         self.cancel_button.setEnabled(False)
-        right_layout.insertWidget(1, self.cancel_button)
-        self.cancel_button.clicked.connect(self.on_cancel)
 
+        input_layout.addWidget(self.input_edit)
+        input_layout.addWidget(self.send_button)
+        input_layout.addWidget(self.cancel_button)  # ✅ 放在发送按钮后面
+        right_layout.addLayout(input_layout)
+        self.cancel_button.clicked.connect(self.on_cancel)
 
         main_layout.addLayout(right_layout)
 
