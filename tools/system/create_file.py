@@ -1,7 +1,7 @@
 import os
 from tools.rpc_registry import register_method
 
-@register_method("create_file")
+@register_method("create_file", param_desc={"file_name": "文件名", "content": "文件内容", "extension": "文件扩展名"})
 def create_file(params: dict) -> dict:
     file_name = params.get("file_name", "")
     content = params.get("content", "")
@@ -18,7 +18,7 @@ def create_file(params: dict) -> dict:
     except Exception as e:
         return {"content": f"❌ 创建失败：{e}", "done": True}
 
-@register_method("create_files")
+@register_method("create_files", param_desc={"file_names": "文件名列表", "contents": "文件内容列表", "extensions": "文件扩展名列表"})
 def create_files(params: dict) -> dict:
     file_names = params.get("file_names", [])
     contents = params.get("contents", [])

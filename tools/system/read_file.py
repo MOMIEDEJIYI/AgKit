@@ -2,7 +2,7 @@ import os
 import re
 from tools.rpc_registry import register_method
 
-@register_method("read_file")
+@register_method("read_file", param_desc={"file_name": "文件名"})
 def read_file(params: dict) -> dict:
     file_name = params.get("file_name", "")
     try:
@@ -11,7 +11,7 @@ def read_file(params: dict) -> dict:
     except Exception as e:
         return {"content": f"❌ 读取失败：{e}", "done": True}
 
-@register_method("read_files")
+@register_method("read_files", param_desc={"file_names": "文件名列表"})
 def read_files(params: dict) -> dict:
     file_names = params.get("file_names", [])
     result = {}
@@ -23,7 +23,7 @@ def read_files(params: dict) -> dict:
             result[file_name] = f"❌ 读取失败：{e}"
     return {"content": result, "done": True}
 
-@register_method("read_folder")
+@register_method("read_folder", param_desc={"folder_path": "文件夹路径"})
 def read_folder(params: dict) -> dict:
     folder_path = params.get("folder_path", "")
     result = {}
@@ -40,7 +40,7 @@ def read_folder(params: dict) -> dict:
                 result[file_name] = f"❌ 读取失败：{e}"
     return {"content": result, "done": True}
 
-@register_method("find_imported_files")
+@register_method("find_imported_files", param_desc={"file_content": "文件内容"})
 def find_imported_files(params: dict) -> dict:
     file_content = params.get("file_content", "")
     pattern = r"from\s+(\S+)\s+import|import\s+(\S+)"
@@ -52,7 +52,7 @@ def find_imported_files(params: dict) -> dict:
             modules.add(module.strip())
     return {"content": [f"{m}.py" for m in modules], "done": True}
 
-@register_method("read_related_files")
+@register_method("read_related_files", param_desc={"base_file": "基础文件"})
 def read_related_files(params: dict) -> dict:
     base_file = params.get("base_file", "")
     try:
@@ -63,7 +63,7 @@ def read_related_files(params: dict) -> dict:
     except Exception as e:
         return {"content": {base_file: f"❌ 分析失败：{e}"}, "done": True}
 
-@register_method("list_files")
+@register_method("list_files", param_desc={"directory": "文件夹路径"})
 def list_files(params: dict) -> dict:
     directory = params.get("directory", "")
     try:

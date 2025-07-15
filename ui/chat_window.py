@@ -73,7 +73,6 @@ class ChatWindow(QWidget):
 
         self.agent = Agent()
         self.orchestrator = AgentOrchestrator(self.agent)
-        self.agent.available_methods = list(self.agent_methods())
 
     def agent_methods(self):
         from tools.rpc_registry import METHOD_REGISTRY

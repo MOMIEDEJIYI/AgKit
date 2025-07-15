@@ -2,10 +2,13 @@ import os
 import importlib
 
 METHOD_REGISTRY = {}
+METHOD_DOCS = {}  # 新增：存参数说明
 
-def register_method(name):
+def register_method(name, param_desc=None):
     def decorator(func):
         METHOD_REGISTRY[name] = func
+        if param_desc:
+            METHOD_DOCS[name] = param_desc
         return func
     return decorator
 

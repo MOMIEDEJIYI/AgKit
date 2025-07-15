@@ -13,7 +13,6 @@ class WorkerThread(QThread):
         self.history = history
         self.agent = Agent()
         self.orchestrator = AgentOrchestrator(self.agent)
-        self.agent.available_methods = self.agent_methods()
 
     def agent_methods(self):
         from tools.rpc_registry import METHOD_REGISTRY
@@ -23,11 +22,16 @@ class WorkerThread(QThread):
         try:
             self.thinking.emit("🤔 正在思考中，请稍等...")
 
-            first_response = self.agent.ask(self.history)
+            known_methods = self.agent_methods()
+            first_response = self.agent.ask(self.history, known_methods=known_methods)
             if self.cancelled:
                 return
 
-            final_response = self.orchestrator.run_task(self.history, first_response, check_cancel=self.is_cancelled)
+            final_response = self.orchestrator.run_task(
+                self.history,
+                first_response,
+                check_cancel=self.is_cancelled
+            )
             if self.cancelled:
                 return
 

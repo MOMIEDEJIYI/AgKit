@@ -2,7 +2,10 @@ import os
 from tools.rpc_registry import register_method
 from tools.system.create_file import create_file
 
-@register_method("update_file")
+@register_method("update_file", param_desc={
+    "file_name": "文件名",
+    "content": "文件内容"
+})
 def file_update(params: dict) -> dict:
     file_name = params.get("file_name", "")
     content = params.get("content", "")

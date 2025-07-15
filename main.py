@@ -8,11 +8,16 @@ def load_stylesheet(path: str) -> str:
         return f.read()
 
 def print_registered_methods():
-    from tools.rpc_registry import METHOD_REGISTRY
+    from tools.rpc_registry import METHOD_REGISTRY, METHOD_DOCS
     print("📌 已注册的 JSON-RPC 方法:")
     for name in sorted(METHOD_REGISTRY.keys()):
         func = METHOD_REGISTRY[name]
+        param_desc = METHOD_DOCS.get(name)
         print(f" - {name}: {func.__module__}.{func.__name__}")
+        if param_desc:
+            print(f"   参数说明:")
+            for k, v in param_desc.items():
+                print(f"     • {k}: {v}")
 
 if __name__ == "__main__":
     print_registered_methods()

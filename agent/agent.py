@@ -2,7 +2,7 @@
 
 from openai import OpenAI
 from config import API_KEY
-from tools.rpc_registry import METHOD_REGISTRY
+from tools.rpc_registry import METHOD_REGISTRY, METHOD_DOCS
 
 
 class Agent:
@@ -26,7 +26,7 @@ class Agent:
 格式如下：
 
 {
-  "explanation": "用自然语言简要说明你要调用的方法和目的。",
+  "explanation": "xxx", // 给用户看的说明
   "jsonrpc": {
     "jsonrpc": "2.0",
     "method": "方法名",
@@ -41,7 +41,7 @@ class Agent:
 2. **通知（Notification）**
 格式如下：
 {
-  "explanation": "用自然语言简要说明你要发送的通知内容。",
+  "explanation": "xxx", // 给用户看的说明
   "jsonrpc": {
     "jsonrpc": "2.0",
     "method": "方法名",
@@ -55,7 +55,7 @@ class Agent:
 3. **响应（Response）**
 格式如下：
 {
-  "explanation": "用自然语言简要说明你完成了什么，给用户看的。",
+  "explanation": "xxx", // 给用户看的说明
   "jsonrpc": {
     "jsonrpc": "2.0",
     "result": {
@@ -75,7 +75,8 @@ class Agent:
 - 所有调用请求和响应必须有且仅有一个唯一整数型 id 字段。
 - 通知请求不应包含 id 字段。
 """
-
+        self._available_methods = list(METHOD_REGISTRY.keys())
+        self.method_docs = METHOD_DOCS  # 参数说明字典
     @property
     def available_methods(self):
         # 动态返回当前所有注册的JSON-RPC方法名列表
@@ -83,14 +84,26 @@ class Agent:
     @available_methods.setter
     def available_methods(self, methods):
         self._available_methods = methods
-    def ask(self, history_messages: list[dict], known_methods=None) -> str:
-        print("history_messages", history_messages)
+    def ask(self, history_messages: list[dict], known_methods=None, extra_prompt=None) -> str:
         system_prompt = self.system_prompt
         if known_methods:
-            system_prompt += (
-                "\n\n请仅使用以下方法名之一调用 JSON-RPC 接口："
-                + ", ".join(known_methods)
-            )
+            system_prompt += "\n\n请仅使用以下方法名之一调用 JSON-RPC 接口："
+            system_prompt += ", ".join(known_methods)
+
+            # 附加参数说明，给模型更清晰指引
+            params_info = []
+            for method in known_methods:
+                if method in self.method_docs:
+                    params_desc = self.method_docs[method]
+                    params_str = ", ".join(f"{k}: {v}" for k, v in params_desc.items())
+                    params_info.append(f"{method}({params_str})")
+                else:
+                    params_info.append(method)
+            if params_info:
+                system_prompt += "\n\n方法和参数说明如下：\n" + "\n".join(params_info)
+
+        if extra_prompt:
+            system_prompt += "\n\n" + extra_prompt
 
         messages = [{"role": "system", "content": system_prompt}] + history_messages
 
