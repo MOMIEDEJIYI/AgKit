@@ -113,3 +113,49 @@ class Agent:
             temperature=0.2,
         )
         return response.choices[0].message.content.strip()
+    
+    def ask_stream(self, history_messages: list[dict], known_methods=None, extra_prompt=None, check_cancel=lambda: False) -> str:
+      system_prompt = self.system_prompt
+      if known_methods:
+          system_prompt += "\n\n请仅使用以下方法名之一调用 JSON-RPC 接口："
+          system_prompt += ", ".join(known_methods)
+
+          # 附加参数说明
+          params_info = []
+          for method in known_methods:
+              if method in self.method_docs:
+                  params_desc = self.method_docs[method]
+                  params_str = ", ".join(f"{k}: {v}" for k, v in params_desc.items())
+                  params_info.append(f"{method}({params_str})")
+              else:
+                  params_info.append(method)
+          if params_info:
+              system_prompt += "\n\n方法和参数说明如下：\n" + "\n".join(params_info)
+
+      if extra_prompt:
+          system_prompt += "\n\n" + extra_prompt
+
+      messages = [{"role": "system", "content": system_prompt}] + history_messages
+
+      collected_text = ""
+      try:
+          stream = self.client.chat.completions.create(
+              model=self.model,
+              messages=messages,
+              temperature=0.2,
+              stream=True  # 开启流式
+          )
+
+          for chunk in stream:
+              if check_cancel():
+                  print("🛑 中断请求：用户取消")
+                  return "🛑 已取消当前任务"
+
+              delta = chunk.choices[0].delta
+              if hasattr(delta, "content") and delta.content:
+                  collected_text += delta.content
+
+          return collected_text.strip()
+
+      except Exception as e:
+          return f"❌ OpenAI 请求失败：{str(e)}"

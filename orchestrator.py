@@ -7,9 +7,16 @@ class AgentOrchestrator:
     def __init__(self, agent):
         self.agent = agent
 
-    def run_task(self, history, first_response=None, check_cancel=lambda: False):
+    def run_task(self, history, first_response=None, check_cancel=lambda: False, use_stream=False):
         current_history = history[:]
-        response = first_response or self.agent.ask(current_history)
+        response = first_response or (
+            self.agent.ask_stream(current_history, check_cancel=check_cancel)
+            if use_stream else
+            self.agent.ask(current_history)
+        )
+        if isinstance(response, dict) and response.get("cancelled"):
+            print("🛑 接收到中断标志，结束任务")
+            return "🛑 用户取消了操作。"
 
         for _ in range(5):  # 最多尝试 5 次防止死循环
             if check_cancel():

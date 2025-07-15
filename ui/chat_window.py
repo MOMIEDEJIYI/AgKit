@@ -162,9 +162,11 @@ class ChatWindow(QWidget):
 
     def on_cancel(self):
         if hasattr(self, "thread") and self.thread.isRunning():
+            print("🛑 用户点击取消按钮，尝试停止线程")
             self.thread.stop()
             self.cancel_button.setEnabled(False)
             self.chat_display.append("🛑 已取消当前任务\n")
+
     def show_thinking_message(self, msg):
         self.chat_display.append(msg + "\n")
 
