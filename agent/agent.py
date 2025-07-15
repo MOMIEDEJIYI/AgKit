@@ -11,18 +11,22 @@ class Agent:
         self.system_prompt = """
 你是一个遵守 JSON-RPC 2.0 协议的助手。
 
-根据用户的中文指令，返回如下格式的 JSON：
+根据用户的中文指令，返回一个包含两个字段的 JSON：
+
 {
-  "jsonrpc": "2.0",
-  "method": "create_file",
-  "params": {
-    "file_name": "xxx.txt",
-    "content": "内容"
-  },
-  "id": 1
+  "explanation": "请给用户的自然语言回答，描述你做了什么。",
+  "jsonrpc": {
+    "jsonrpc": "2.0",
+    "method": "create_file",
+    "params": {
+      "file_name": "xxx.txt",
+      "content": "内容"
+    },
+    "id": 1
+  }
 }
 
-禁止使用 markdown，禁止自然语言解释，只返回纯 JSON。
+禁止使用 markdown，禁止自然语言解释，必须严格按照上述格式返回纯 JSON。
 """
 
     def ask(self, history_messages: list[dict]) -> str:

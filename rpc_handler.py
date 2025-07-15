@@ -4,20 +4,12 @@ from tools.create_file import create_file, create_files
 from tools.read_file import read_file, read_files, read_folder, read_related_files, find_imported_files, list_files
 from tools.delete_file import delete_file, delete_files
 from tools.execute_command import execute_command
-
-def extract_json_from_text(text: str) -> str:
-    # 匹配 ```json ... ``` 或 ``` ... ``` 代码块内容
-    pattern = r"```json(.*?)```|```(.*?)```"
-    matches = re.findall(pattern, text, re.DOTALL)
-    for match in matches:
-        json_text = match[0] or match[1]
-        if json_text:
-            return json_text.strip()
-    return text.strip()
+from utils import utils
 
 def handle_rpc_request(raw_text: str) -> dict:
+    print("RPC 请求文本:", raw_text)
     try:
-        json_str = extract_json_from_text(raw_text)
+        json_str = utils.extract_json_from_text(raw_text)
         request = json.loads(json_str)
         method = request.get("method")
         params = request.get("params", {})

@@ -1,4 +1,5 @@
 import sys
+import json
 import os
 from PyQt5.QtWidgets import (
     QApplication, QWidget, QHBoxLayout, QVBoxLayout,
@@ -8,6 +9,7 @@ from PyQt5.QtCore import Qt
 from conversation.manager import ConversationManager
 from rpc_handler import handle_rpc_request
 from tools.worker_thread import WorkerThread
+from utils import utils
 
 def load_stylesheet(path: str) -> str:
     with open(path, "r", encoding="utf-8") as f:
@@ -75,18 +77,27 @@ class ChatWindow(QWidget):
     def load_history(self):
         self.chat_display.clear()
         history = self.manager.get_history()
+        import json
         for msg in history:
             role = msg["role"]
-            content = msg["content"]
             if role == "system":
-                display_role = "[系统]"
-            elif role == "user":
+                continue  # 不显示系统提示
+
+            content = msg["content"]
+            if role == "user":
                 display_role = "你"
+                self.chat_display.append(f"{display_role}: {content}\n")
             elif role == "assistant":
                 display_role = "助手"
+                # 尝试把内容格式化成漂亮的 JSON，如果失败就直接显示原文
+                try:
+                    parsed = json.loads(content)
+                    pretty_json = json.dumps(parsed, ensure_ascii=False, indent=2)
+                    self.chat_display.append(f"{display_role} (JSON):\n```json\n{pretty_json}\n```\n")
+                except Exception:
+                    self.chat_display.append(f"{display_role}: {content}\n")
             else:
-                display_role = role
-            self.chat_display.append(f"{display_role}: {content}\n")
+                self.chat_display.append(f"{role}: {content}\n")
 
         self.chat_display.verticalScrollBar().setValue(self.chat_display.verticalScrollBar().maximum())
 
@@ -115,14 +126,32 @@ class ChatWindow(QWidget):
         self.thread.start()
 
     def on_agent_response(self, response):
-        self.manager.add_message("assistant", response)
-        self.load_history()
+        print("Agent response:", response)
+        response = utils.extract_json_from_text(response)
+        try:
+            data = json.loads(response)
+            explanation = data.get("explanation", "")
+            rpc_command = data.get("jsonrpc", {})
 
-        # 执行 JSON-RPC 请求
-        rpc_response = handle_rpc_request(response)
+            # 显示自然语言解释给用户
+            self.manager.add_message("assistant", explanation)
+            self.load_history()
 
-        self.manager.add_message("assistant", f"执行结果:\n{rpc_response}")
-        self.load_history()
+            # 执行 JSON-RPC 请求
+            rpc_response = handle_rpc_request(json.dumps(rpc_command))
+
+            # rpc_response本身是dict，提取result显示
+            if isinstance(rpc_response, dict):
+                result_str = rpc_response.get("result", str(rpc_response))
+            else:
+                result_str = str(rpc_response)
+
+            self.manager.add_message("assistant", f"执行结果:\n{result_str}")
+            self.load_history()
+
+        except Exception as e:
+            self.manager.add_message("assistant", f"解析模型回复出错：{str(e)}")
+            self.load_history()
 
         # 清空输入框，恢复发送按钮
         self.input_edit.clear()
