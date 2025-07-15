@@ -95,15 +95,45 @@ class ChatWindow(QWidget):
         for msg in history:
             role = msg["role"]
             if role == "system":
-                continue  # 跳过 system 消息（比如 rpc 执行结果）
+                continue
             content = msg["content"]
             display_role = "你" if role == "user" else "助手"
 
-            # ✅ 如果是结构体，尝试只提取 explanation
             try:
-                parsed = json.loads(content)
+                # 先去掉```json ```包裹，如果有的话
+                import re
+                m = re.search(r"```json\s*(\{.*?\})\s*```", content, re.DOTALL)
+                if m:
+                    content_json_str = m.group(1)
+                else:
+                    content_json_str = content
+
+                parsed = json.loads(content_json_str)
+
                 if isinstance(parsed, dict) and "explanation" in parsed:
-                    self.chat_display.append(f"{display_role}: {parsed['explanation']}\n")
+                    explanation = parsed["explanation"]
+                    extra = ""
+
+                    jsonrpc = parsed.get("jsonrpc")
+                    if isinstance(jsonrpc, dict):
+                        result = jsonrpc.get("result")
+                        if isinstance(result, dict):
+                            extra = result.get("message") or result.get("content") or ""
+
+                    # 格式化展示 extra
+                    if extra:
+                        if isinstance(extra, (dict, list)):
+                            import json as json_mod
+                            extra = json_mod.dumps(extra, ensure_ascii=False, indent=2)
+                        max_len = 1000
+                        if len(extra) > max_len:
+                            extra = extra[:max_len] + "\n...（内容过长，已截断）"
+
+                    full_text = f"{display_role}: {explanation}"
+                    if extra:
+                        full_text += f"\n{extra}"
+
+                    self.chat_display.append(full_text + "\n")
                 else:
                     self.chat_display.append(f"{display_role}: {content}\n")
             except Exception:

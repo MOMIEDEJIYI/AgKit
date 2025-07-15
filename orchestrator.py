@@ -18,13 +18,11 @@ class AgentOrchestrator:
 
                 # ✅ 如果包含 jsonrpc 字段，说明是调用请求
                 if "jsonrpc" in parsed and isinstance(parsed["jsonrpc"], dict):
+                    print('✅ 包含 jsonrpc 字段，说明是调用请求')
                     rpc_call = parsed["jsonrpc"]
                     print("⚙️ 执行 JSON-RPC 请求:", rpc_call)
                     rpc_response = handle_rpc_request(json.dumps(rpc_call))
-                    if rpc_response.get("result") and isinstance(rpc_response["result"], dict):
-                        if rpc_response["result"].get("done") is True:
-                            # 任务完成，结束循环
-                            break
+                    
 
                     if rpc_response.get("error") and "未知方法" in rpc_response["error"]["message"]:
                         print("❗未知方法，尝试引导模型使用合法方法")
@@ -35,20 +33,20 @@ class AgentOrchestrator:
                         {"role": "assistant", "content": response},
                         {"role": "system", "content": f"RPC调用结果：{json.dumps(rpc_response, ensure_ascii=False)}"}
                     ]
-
                     response = self.agent.ask(current_history)
+                    if rpc_response.get("result") and isinstance(rpc_response["result"], dict):
+                        if rpc_response["result"].get("done") is True:
+                            # 任务完成，结束循环
+                            break
                     continue
 
                 else:
+                    print('❌ 没有 jsonrpc 字段，模型应该已经进入“只说话”阶段')
                     break  # 没有 jsonrpc 字段，模型应该已经进入“只说话”阶段
 
             except Exception as e:
                 print("❌ 出现异常:", str(e))
                 break
+        # 直接交给 UI 去处理完整结构
+        return response
 
-        # 提取 explanation（如果模型还用 JSON 返回）
-        try:
-            parsed = json.loads(response)
-            return parsed.get("explanation", response)
-        except Exception:
-            return response

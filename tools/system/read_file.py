@@ -3,13 +3,13 @@ import re
 from tools.rpc_registry import register_method
 
 @register_method("read_file")
-def read_file(params: dict) -> str:
+def read_file(params: dict) -> dict:
     file_name = params.get("file_name", "")
     try:
         with open(file_name, "r", encoding="utf-8") as f:
-            return f.read()
+            return {"content": f.read(), "done": True}
     except Exception as e:
-        return f"❌ 读取失败：{e}"
+        return {"content": f"❌ 读取失败：{e}", "done": True}
 
 @register_method("read_files")
 def read_files(params: dict) -> dict:
@@ -21,7 +21,7 @@ def read_files(params: dict) -> dict:
                 result[file_name] = f.read()
         except Exception as e:
             result[file_name] = f"❌ 读取失败：{e}"
-    return result
+    return {"content": result, "done": True}
 
 @register_method("read_folder")
 def read_folder(params: dict) -> dict:
@@ -38,10 +38,10 @@ def read_folder(params: dict) -> dict:
                     result[file_name] = f.read()
             except Exception as e:
                 result[file_name] = f"❌ 读取失败：{e}"
-    return result
+    return {"content": result, "done": True}
 
 @register_method("find_imported_files")
-def find_imported_files(params: dict) -> list:
+def find_imported_files(params: dict) -> dict:
     file_content = params.get("file_content", "")
     pattern = r"from\s+(\S+)\s+import|import\s+(\S+)"
     matches = re.findall(pattern, file_content)
@@ -50,7 +50,7 @@ def find_imported_files(params: dict) -> list:
         module = m[0] or m[1]
         if "." not in module:
             modules.add(module.strip())
-    return [f"{m}.py" for m in modules]
+    return {"content": [f"{m}.py" for m in modules], "done": True}
 
 @register_method("read_related_files")
 def read_related_files(params: dict) -> dict:
@@ -61,12 +61,12 @@ def read_related_files(params: dict) -> dict:
         related = find_imported_files({"file_content": content})
         return read_files({"file_names": related})
     except Exception as e:
-        return {base_file: f"❌ 分析失败：{e}"}
+        return {"content": {base_file: f"❌ 分析失败：{e}"}, "done": True}
 
 @register_method("list_files")
-def list_files(params: dict) -> list:
+def list_files(params: dict) -> dict:
     directory = params.get("directory", "")
     try:
-        return [f for f in os.listdir(directory) if os.path.isfile(os.path.join(directory, f))]
+        return {"content": [f for f in os.listdir(directory) if os.path.isfile(os.path.join(directory, f))], "done": True}
     except Exception as e:
-        return [f"❌ 读取失败：{e}"]
+        return {"content": [f"❌ 读取失败：{e}"], "done": True}

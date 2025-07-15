@@ -45,6 +45,7 @@ class Agent:
     def available_methods(self, methods):
         self._available_methods = methods
     def ask(self, history_messages: list[dict], known_methods=None) -> str:
+        print("history_messages", history_messages)
         system_prompt = self.system_prompt
         if known_methods:
             system_prompt += (

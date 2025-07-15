@@ -2,7 +2,7 @@ import os
 from tools.rpc_registry import register_method
 
 @register_method("create_file")
-def create_file(params: dict) -> str:
+def create_file(params: dict) -> dict:
     file_name = params.get("file_name", "")
     content = params.get("content", "")
     extension = params.get("extension", "txt")
@@ -14,12 +14,12 @@ def create_file(params: dict) -> str:
     try:
         with open(file_name, "w", encoding="utf-8") as f:
             f.write(content)
-        return f"✅ 已创建文件：{file_name}"
+        return {"content": f"✅ 已创建文件：{file_name}", "done": True}
     except Exception as e:
-        return f"❌ 创建失败：{e}"
+        return {"content": f"❌ 创建失败：{e}", "done": True}
 
 @register_method("create_files")
-def create_files(params: dict) -> str:
+def create_files(params: dict) -> dict:
     file_names = params.get("file_names", [])
     contents = params.get("contents", [])
     extensions = params.get("extensions", [])
@@ -32,6 +32,6 @@ def create_files(params: dict) -> str:
         content = contents[i] if i < len(contents) else ""
         ext = extensions[i] if i < len(extensions) else "txt"
         msg = create_file({"file_name": file_name, "content": content, "extension": ext})
-        messages.append(msg)
+        messages.append(msg["content"])  # 取出字符串部分拼接
 
-    return "\n".join(messages)
+    return {"content": "\n".join(messages), "done": True}

@@ -3,12 +3,10 @@ from utils import utils
 from tools.rpc_registry import METHOD_REGISTRY  # 导入注册表
 
 def handle_rpc_request(raw_text: str) -> dict | None:
-    # print("RPC 请求文本:", raw_text)
     try:
         json_str = utils.extract_json_from_text(raw_text)
         request = json.loads(json_str)
 
-        # JSON-RPC 基本字段校验
         if request.get("jsonrpc") != "2.0" or "method" not in request:
             raise ValueError("无效的 JSON-RPC 请求")
 
@@ -19,14 +17,14 @@ def handle_rpc_request(raw_text: str) -> dict | None:
         handler = METHOD_REGISTRY.get(method)
         if not handler:
             if request_id is None:
-                return None  # 是通知就不响应
+                return None
             return {
                 "jsonrpc": "2.0",
                 "error": {"code": -32601, "message": f"未知方法: {method}"},
                 "id": request_id
             }
 
-        # 调用方法（支持 params 为 dict 或 list）
+        # 调用工具函数
         if isinstance(params, dict):
             result = handler(params)
         elif isinstance(params, list):
@@ -34,17 +32,14 @@ def handle_rpc_request(raw_text: str) -> dict | None:
         else:
             result = handler(params)
 
-        # 你在这里给结果加一个状态字段，标示任务完成
-        if isinstance(result, dict):
-            # 你可以根据具体逻辑设置done，比如只读文件时表示已经完成
-            result["done"] = True
-        else:
-            # 如果是字符串或其他类型，可以包裹成dict
-            result = {"content": result, "done": True}
+        # 强制校验返回值必须是 dict，且包含 content 和 done
+        if not isinstance(result, dict):
+            raise ValueError(f"工具函数返回值必须是 dict，当前类型: {type(result)}")
+        if "content" not in result or "done" not in result:
+            raise ValueError("工具函数返回的结果必须包含 'content' 和 'done' 字段")
 
-        # 是通知，不返回响应
         if request_id is None:
-            return None
+            return None  # 通知类型不返回响应
 
         return {
             "jsonrpc": "2.0",
