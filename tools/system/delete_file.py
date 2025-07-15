@@ -1,6 +1,9 @@
 import os
+from tools.rpc_registry import register_method
 
-def delete_file(file_name: str) -> str:
+@register_method("delete_file")
+def delete_file(params: dict) -> str:
+    file_name = params.get("file_name", "")
     try:
         if os.path.exists(file_name):
             os.remove(file_name)
@@ -10,9 +13,11 @@ def delete_file(file_name: str) -> str:
     except Exception as e:
         return f"❌ 删除失败：{e}"
 
-def delete_files(file_names: list[str]) -> str:
+@register_method("delete_files")
+def delete_files(params: dict) -> str:
+    file_names = params.get("file_names", [])
     messages = []
     for file_name in file_names:
-        msg = delete_file(file_name)
+        msg = delete_file({"file_name": file_name})
         messages.append(msg)
     return "\n".join(messages)
