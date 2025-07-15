@@ -120,7 +120,7 @@ class ChatWindow(QWidget):
                             extra = extra[:max_len] + "\n...（内容过长，已截断）"
 
                     full_text = f"{display_role}: {explanation}"
-                    if extra:
+                    if extra and extra.strip() not in explanation:
                         full_text += f"\n{extra}"
 
                     self.chat_display.append(full_text + "\n")

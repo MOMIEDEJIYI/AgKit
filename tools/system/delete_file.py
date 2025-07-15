@@ -9,7 +9,7 @@ def delete_file(params: dict) -> dict:
             os.remove(file_name)
             return {"content": f"✅ 已删除文件：{file_name}", "done": True}
         else:
-            return f"❌ 文件不存在：{file_name}"
+            return {"content": f"❌ 文件不存在：{file_name}", "done": True}
     except Exception as e:
         return {"content": f"❌ 删除失败：{e}", "done": True}
 
@@ -19,5 +19,6 @@ def delete_files(params: dict) -> dict:
     messages = []
     for file_name in file_names:
         msg = delete_file({"file_name": file_name})
-        messages.append(msg)
+        messages.append(msg.get("content", "❌ 无返回内容"))
     return {"content": "\n".join(messages), "done": True}
+
