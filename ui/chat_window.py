@@ -1,10 +1,11 @@
 import json
 import re
+import os
 from PyQt5.QtWidgets import (
     QWidget, QHBoxLayout, QVBoxLayout,
-    QListWidget, QTextEdit, QLineEdit, QPushButton
+    QListWidget, QTextEdit, QLineEdit, QPushButton, QApplication
 )
-from PyQt5.QtCore import Qt
+from PyQt5.QtCore import Qt, QPropertyAnimation, QRect, QEasingCurve
 from conversation.manager import ConversationManager
 from tools.worker_thread import WorkerThread
 from agent.agent import Agent
@@ -53,7 +54,7 @@ class ChatWindow(QWidget):
 
         input_layout.addWidget(self.input_edit)
         input_layout.addWidget(self.send_button)
-        input_layout.addWidget(self.cancel_button)  # ✅ 放在发送按钮后面
+        input_layout.addWidget(self.cancel_button)
         right_layout.addLayout(input_layout)
         self.cancel_button.clicked.connect(self.on_cancel)
 
@@ -73,6 +74,50 @@ class ChatWindow(QWidget):
         self.agent = Agent()
         self.orchestrator = AgentOrchestrator(self.agent)
 
+        self._apply_stylesheet()
+
+    def _apply_stylesheet(self):
+        style_path = os.path.join(os.path.dirname(__file__), "../assets/style.qss")
+        if os.path.exists(style_path):
+            with open(style_path, "r", encoding="utf-8") as f:
+                QApplication.instance().setStyleSheet(f.read())
+
+    def show_with_animation(self):
+        screen = self.screen().availableGeometry()
+        final_rect = QRect(
+            (screen.width() - 900) // 2,
+            (screen.height() - 600) // 2,
+            900,
+            600,
+        )
+        start_rect = QRect(
+            final_rect.center().x(),
+            final_rect.center().y(),
+            0,
+            0,
+        )
+        self.setGeometry(start_rect)
+        self.setWindowOpacity(0)
+        self.show()
+
+        # 几何形状动画（弹跳放大）
+        self.anim_geometry = QPropertyAnimation(self, b"geometry")
+        self.anim_geometry.setDuration(400)
+        self.anim_geometry.setStartValue(start_rect)
+        self.anim_geometry.setEndValue(final_rect)
+        self.anim_geometry.setEasingCurve(QEasingCurve.OutBack)
+
+        # 透明度动画（淡入）
+        self.anim_opacity = QPropertyAnimation(self, b"windowOpacity")
+        self.anim_opacity.setDuration(400)
+        self.anim_opacity.setStartValue(0)
+        self.anim_opacity.setEndValue(1)
+
+        # 同时启动动画
+        self.anim_geometry.start()
+        self.anim_opacity.start()
+
+    # --- 下面是你的业务代码，保持不变 ---
     def agent_methods(self):
         from tools.rpc_registry import METHOD_REGISTRY
         return sorted(METHOD_REGISTRY.keys())
