@@ -4,11 +4,12 @@ import os
 import sys
 from PyQt5.QtWidgets import (
     QWidget, QHBoxLayout, QVBoxLayout,
-    QListWidget, QTextEdit, QLineEdit, QPushButton, QApplication
+    QListWidget, QTextEdit, QLineEdit, QPushButton, QApplication, QDialog
 )
 from PyQt5.QtCore import Qt, QPropertyAnimation, QRect, QEasingCurve
 from agent.worker_thread import WorkerThread
 from agent.agent_service import AgentService
+from ui.components.http_request_config_dialog import HttpRequestConfigDialog
 
 def resource_path(relative_path):
     if hasattr(sys, '_MEIPASS'):  # 打包时临时目录
@@ -28,8 +29,19 @@ class ChatWindow(QWidget):
         main_layout = QHBoxLayout(self)
 
         left_layout = QVBoxLayout()
+        # 添加设置按钮 + 新聊天 按钮（横向排布）
+        self.settings_btn = QPushButton("请求设置")
+        self.settings_btn.setFixedWidth(80)
+        self.settings_btn.clicked.connect(self.open_http_request_config)
+        self.http_request_config = {}  # 保存配置（建议改为字典形式）
+
         self.new_session_button = QPushButton("新聊天")
-        left_layout.addWidget(self.new_session_button)
+        self.new_session_button.clicked.connect(self.on_new_session)
+
+        top_button_row = QHBoxLayout()
+        top_button_row.addWidget(self.settings_btn)
+        top_button_row.addWidget(self.new_session_button)
+        left_layout.addLayout(top_button_row)
         self.new_session_button.clicked.connect(self.on_new_session)
 
         self.session_list = QListWidget()
@@ -201,6 +213,13 @@ class ChatWindow(QWidget):
         self.thread.thinking.connect(self.show_thinking_message)
         self.thread.start()
 
+    def open_http_request_config(self):
+        dialog = HttpRequestConfigDialog(self)
+        if dialog.exec() == QDialog.Accepted:
+            config = dialog.get_config()
+            print("用户配置了HTTP请求参数:", config)
+            # 这里可以保存到当前会话配置里，或者直接传给Agent
+            self.http_request_config = config
 
     def on_cancel(self):
         if hasattr(self, "thread") and self.thread.isRunning():
