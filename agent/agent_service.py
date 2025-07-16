@@ -63,4 +63,13 @@ class AgentService:
 
       return final_response
 
-
+    def delete_session(self, file_name: str):
+      print(f"AgentService: 删除会话 {file_name}")
+      self.manager.delete_session(file_name)
+      if not self.manager.current_session:
+          sessions = self.manager.list_sessions()
+          if sessions:
+              self.manager.switch_session(sessions[0])
+          else:
+              new_session = self.manager.create_session("你是遵守 JSON-RPC 2.0 协议的智能助手")
+              self.manager.switch_session(new_session)

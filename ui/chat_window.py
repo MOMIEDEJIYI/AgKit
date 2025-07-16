@@ -241,9 +241,12 @@ class ChatWindow(QWidget):
         if not current_item:
             return
         file_name = current_item.text()
-        self.service.manager.delete_session(file_name)
+        self.service.delete_session(file_name)  # 通过服务层删除
+        
         row = self.session_list.row(current_item)
         self.session_list.takeItem(row)
+        
+        # 刷新UI列表和切换会话显示
         sessions = self.service.manager.list_sessions()
         if sessions:
             self.service.manager.switch_session(sessions[0])
@@ -252,7 +255,8 @@ class ChatWindow(QWidget):
             if items:
                 self.session_list.setCurrentItem(items[0])
         else:
-            file_name = self.service.manager.create_session("你是遵守 JSON-RPC 2.0 协议的智能助手，返回符合规范的 JSON-RPC 请求。")
-            self.session_list.addItem(file_name)
-            self.service.manager.switch_session(file_name)
+            new_session = self.service.manager.create_session("你是遵守 JSON-RPC 2.0 协议的智能助手")
+            self.session_list.addItem(new_session)
+            self.service.manager.switch_session(new_session)
             self.load_history()
+
