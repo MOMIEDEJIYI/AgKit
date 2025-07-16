@@ -7,9 +7,7 @@ from PyQt5.QtWidgets import (
 )
 from PyQt5.QtCore import Qt, QPropertyAnimation, QRect, QEasingCurve
 from tools.worker_thread import WorkerThread
-from agent.agent import Agent
 from agent.agent_service import AgentService
-from agent.orchestrator import AgentOrchestrator
 
 class ChatWindow(QWidget):
     def __init__(self):
@@ -198,8 +196,7 @@ class ChatWindow(QWidget):
         if hasattr(self, "thread") and self.thread.isRunning():
             self.thread.stop()
             self.cancel_button.setEnabled(False)
-            self.chat_display.append("🛑 已取消当前任务\n")
-
+            self.chat_display.append("已取消当前任务\n")
 
     def show_thinking_message(self, msg):
         self.chat_display.append(msg + "\n")
@@ -219,23 +216,6 @@ class ChatWindow(QWidget):
         self.input_edit.setEnabled(True)
         self.input_edit.clear()
         self.cancel_button.setEnabled(False)
-
-    # def on_agent_response(self, first_response):
-    #     print("Agent response:", first_response)
-    #     try:
-    #         final_answer = self.service.orchestrator.run_task(self.service.manager.get_history(), first_response)
-
-    #         self.service.manager.add_message("assistant", final_answer)
-    #         self.load_history()
-
-    #     except Exception as e:
-    #         self.service.manager.add_message("assistant", f"执行任务出错：{str(e)}")
-    #         self.load_history()
-    #     finally:
-    #         self.send_button.setEnabled(True)
-    #         self.input_edit.setEnabled(True)
-    #         self.input_edit.clear()
-
     def on_delete_session(self):
         current_item = self.session_list.currentItem()
         if not current_item:

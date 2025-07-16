@@ -6,12 +6,15 @@ class AgentOrchestrator:
     def __init__(self, agent):
         self.agent = agent
 
-    def run_task_sync(self, history, first_response=None):
+    def run_task_sync(self, history, first_response=None, check_cancel=lambda: False):
         current_history = history[:]
-        response = first_response or self.agent.ask(current_history)
+        response = first_response or self.agent.ask(current_history, check_cancel=check_cancel)
         print("run_task_sync response", response)
 
         for _ in range(5):
+            if check_cancel():
+                print("操作取消，结束任务")
+                return "操作取消"
             try:
                 json_str = utils.extract_json_from_text(response)
                 parsed = json.loads(json_str)
@@ -32,14 +35,14 @@ class AgentOrchestrator:
 
                     if rpc_response.get("error") and "未知方法" in rpc_response["error"]["message"]:
                         print("❗未知方法，尝试引导模型使用合法方法")
-                        response = self.agent.ask(current_history, known_methods=self.agent.available_methods)
+                        response = self.agent.ask(current_history, known_methods=self.agent.available_methods, check_cancel=check_cancel)
                         continue
 
                     current_history += [
                         {"role": "assistant", "content": response},
                         {"role": "system", "content": f"RPC调用结果：{json.dumps(rpc_response, ensure_ascii=False)}"}
                     ]
-                    response = self.agent.ask(current_history)
+                    response = self.agent.ask(current_history, check_cancel=check_cancel)
 
                     if rpc_response.get("result", {}).get("done") is True:
                         break
@@ -66,7 +69,8 @@ class AgentOrchestrator:
 
         for _ in range(5):
             if check_cancel():
-                return "🛑 用户取消了操作。"
+                print("操作取消，结束任务")
+                return "操作取消"
 
             try:
                 json_str = utils.extract_json_from_text(response)
@@ -88,14 +92,14 @@ class AgentOrchestrator:
 
                     if rpc_response.get("error") and "未知方法" in rpc_response["error"]["message"]:
                         print("❗未知方法，尝试引导模型使用合法方法")
-                        response = self.agent.ask(current_history, known_methods=self.agent.available_methods)
+                        response = self.agent.ask_stream(current_history, known_methods=self.agent.available_methods, check_cancel=check_cancel)
                         continue
 
                     current_history += [
                         {"role": "assistant", "content": response},
                         {"role": "system", "content": f"RPC调用结果：{json.dumps(rpc_response, ensure_ascii=False)}"}
                     ]
-                    response = self.agent.ask(current_history)
+                    response = self.agent.ask_stream(current_history, check_cancel=check_cancel)
 
                     if rpc_response.get("result", {}).get("done") is True:
                         break

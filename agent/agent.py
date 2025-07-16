@@ -85,7 +85,7 @@ class Agent:
     def available_methods(self, methods):
         self._available_methods = methods
     def ask(self, history_messages: list[dict], known_methods=None, extra_prompt=None) -> str:
-        print(f"agent ask= history_messages: {history_messages} known_methods: {known_methods} extra_prompt:")
+        print(f"agent ask")
         system_prompt = self.system_prompt
         if known_methods:
             system_prompt += "\n\n请仅使用以下方法名之一调用 JSON-RPC 接口："
@@ -116,6 +116,7 @@ class Agent:
         return response.choices[0].message.content.strip()
     
     def ask_stream(self, history_messages: list[dict], known_methods=None, extra_prompt=None, check_cancel=lambda: False) -> str:
+      print(f"agent ask_stream check_cancel: {check_cancel}")
       system_prompt = self.system_prompt
       if known_methods:
           system_prompt += "\n\n请仅使用以下方法名之一调用 JSON-RPC 接口："
@@ -149,8 +150,8 @@ class Agent:
 
           for chunk in stream:
               if check_cancel():
-                  print("🛑 中断请求：用户取消")
-                  return "🛑 已取消当前任务"
+                  print("中断请求：用户取消")
+                  return "已取消当前任务"
 
               delta = chunk.choices[0].delta
               if hasattr(delta, "content") and delta.content:
@@ -159,4 +160,4 @@ class Agent:
           return collected_text.strip()
 
       except Exception as e:
-          return f"❌ OpenAI 请求失败：{str(e)}"
+          return f"❌ 请求失败：{str(e)}"

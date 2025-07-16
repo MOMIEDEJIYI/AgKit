@@ -17,14 +17,26 @@ class WorkerThread(QThread):
                 self.thinking.emit(msg)
 
             if self.stream_mode:
-                result = self.agent_service.ask_stream(self.user_input, progress_callback=progress)
+                result = self.agent_service.ask_stream(
+                    self.user_input,
+                    check_cancel=self.check_cancel,
+                    progress_callback=progress
+                )
             else:
-                result = self.agent_service.ask(self.user_input, progress_callback=progress)
+                result = self.agent_service.ask(
+                    self.user_input,
+                    check_cancel=self.check_cancel,
+                    progress_callback=progress
+                )
 
             self.finished.emit(result)
         except Exception as e:
             self.error.emit(str(e))
 
     def stop(self):
-        self.cancelled = True
-        self.service.stop()  # todo 取消调用
+        print("WorkerThread: 停止请求")
+        self.agent_service.stop()
+
+    def check_cancel(self):
+        cancelled = self.agent_service.is_cancelled()
+        return cancelled
