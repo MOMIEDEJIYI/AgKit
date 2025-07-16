@@ -19,6 +19,17 @@ def register_method(name, param_desc=None):
 
 def save_snapshot():
     os.makedirs(os.path.dirname(SNAPSHOT_PATH), exist_ok=True)
+
+    # 检查每个注册方法是否有参数说明
+    missing_desc = [name for name in METHOD_REGISTRY if name not in METHOD_DOCS]
+    if missing_desc:
+        print("以下方法缺少参数说明（param_desc）:")
+        for name in missing_desc:
+            func = METHOD_REGISTRY[name]
+            print(f" - {name}: {func.__module__}.{func.__name__}")
+        print("请为每个方法添加参数说明后重试。")
+        sys.exit(1)  # 终止程序
+
     snapshot = {
         "methods": list(METHOD_REGISTRY.keys()),
         "docs": METHOD_DOCS
@@ -26,6 +37,7 @@ def save_snapshot():
     with open(SNAPSHOT_PATH, "w", encoding="utf-8") as f:
         json.dump(snapshot, f, ensure_ascii=False, indent=2)
     print(f"方法注册快照已保存到 {SNAPSHOT_PATH}")
+
 
 def infer_module_from_method(method_name):
     # 按实际规则调整，比如方法名对应模块名，模块在 tools.system 下

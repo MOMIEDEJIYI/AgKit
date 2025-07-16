@@ -1,4 +1,5 @@
 import subprocess
+from tools.rpc_registry import register_method
 
 # 允许执行的命令白名单（只允许pip相关命令作为示例）
 ALLOWED_COMMANDS = [
@@ -7,6 +8,7 @@ ALLOWED_COMMANDS = [
     "pip list"
 ]
 
+@register_method("execute_command")
 def execute_command(command: str) -> str:
     # 简单检查命令是否以允许前缀开头，防止执行任意命令
     if not any(command.strip().startswith(allowed) for allowed in ALLOWED_COMMANDS):
