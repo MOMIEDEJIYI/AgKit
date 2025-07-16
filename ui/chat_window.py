@@ -77,7 +77,7 @@ class ChatWindow(QWidget):
         self._apply_stylesheet()
 
     def _apply_stylesheet(self):
-        style_path = resource_path("assets\styles\style.qss")
+        style_path = resource_path("assets/styles/style.qss")
         print(f"Loading style from: {style_path}")
         if os.path.exists(style_path):
             with open(style_path, "r", encoding="utf-8") as f:
@@ -120,7 +120,7 @@ class ChatWindow(QWidget):
 
     # --- 下面是你的业务代码，保持不变 ---
     def agent_methods(self):
-        from tools.rpc_registry import METHOD_REGISTRY
+        from rpc_registry import METHOD_REGISTRY
         return sorted(METHOD_REGISTRY.keys())
 
     def on_new_session(self):

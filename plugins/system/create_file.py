@@ -1,5 +1,5 @@
 import os
-from tools.rpc_registry import register_method
+from rpc_registry import register_method
 
 @register_method("create_file", param_desc={"file_name": "文件名", "content": "文件内容", "extension": "文件扩展名"})
 def create_file(params: dict) -> dict:

@@ -1,6 +1,6 @@
 import os
-from tools.rpc_registry import register_method
-from tools.system.create_file import create_file
+from rpc_registry import register_method
+from plugins.system.create_file import create_file
 
 @register_method("update_file", param_desc={
     "file_name": "文件名",

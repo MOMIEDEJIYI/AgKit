@@ -1,6 +1,6 @@
 import json
 from utils import utils
-from tools.rpc_registry import METHOD_REGISTRY  # 导入注册表
+from rpc_registry import METHOD_REGISTRY  # 导入注册表
 
 def handle_rpc_request(raw_text: str) -> dict | None:
     try:

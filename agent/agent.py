@@ -2,7 +2,7 @@
 
 from openai import OpenAI
 from config import API_KEY
-from tools.rpc_registry import METHOD_REGISTRY, METHOD_DOCS
+from rpc_registry import METHOD_REGISTRY, METHOD_DOCS
 
 
 class Agent:

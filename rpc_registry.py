@@ -6,8 +6,23 @@ import sys
 METHOD_REGISTRY = {}
 METHOD_DOCS = {}  # 存参数说明
 
-base_dir = getattr(sys, "_MEIPASS", os.path.dirname(sys.argv[0]))
+if getattr(sys, "frozen", False):
+    # 打包模式：获取 exe 所在目录
+    base_dir = os.path.dirname(sys.executable)
+else:
+    # 开发模式：当前文件路径
+    base_dir = os.path.dirname(__file__)
+
+# 插件目录和快照路径
+PLUGINS_DIR = os.path.join(base_dir, "plugins")
 SNAPSHOT_PATH = os.path.join(base_dir, "runtime", "method_registry_snapshot.json")
+
+# 插入 sys.path 以便 import plugins.xxx
+if PLUGINS_DIR not in sys.path:
+    sys.path.insert(0, PLUGINS_DIR)
+if base_dir not in sys.path:
+    sys.path.insert(0, base_dir)
+
 
 def register_method(name, param_desc=None):
     def decorator(func):
@@ -17,10 +32,10 @@ def register_method(name, param_desc=None):
         return func
     return decorator
 
+
 def save_snapshot():
     os.makedirs(os.path.dirname(SNAPSHOT_PATH), exist_ok=True)
 
-    # 检查每个注册方法是否有参数说明
     missing_desc = [name for name in METHOD_REGISTRY if name not in METHOD_DOCS]
     if missing_desc:
         print("以下方法缺少参数说明（param_desc）:")
@@ -28,7 +43,7 @@ def save_snapshot():
             func = METHOD_REGISTRY[name]
             print(f" - {name}: {func.__module__}.{func.__name__}")
         print("请为每个方法添加参数说明后重试。")
-        sys.exit(1)  # 终止程序
+        sys.exit(1)
 
     snapshot = {
         "methods": list(METHOD_REGISTRY.keys()),
@@ -40,8 +55,16 @@ def save_snapshot():
 
 
 def infer_module_from_method(method_name):
-    # 按实际规则调整，比如方法名对应模块名，模块在 tools.system 下
-    return f"tools.system.{method_name}"
+    """
+    假设快照里的方法名格式：
+    - 带子目录，如 "system.read_files"
+    - 不带子目录，默认归到 "system" 子目录
+    """
+    if '.' in method_name:
+        return f"plugins.{method_name}"
+    else:
+        return f"plugins.system.{method_name}"
+
 
 def load_snapshot():
     global METHOD_REGISTRY, METHOD_DOCS
@@ -52,10 +75,8 @@ def load_snapshot():
 
     METHOD_DOCS.clear()
     METHOD_REGISTRY.clear()
-
     METHOD_DOCS.update(snapshot.get("docs", {}))
 
-    # 导入所有模块，让装饰器执行注册
     for method_name in snapshot.get("methods", []):
         module_name = infer_module_from_method(method_name)
         try:
@@ -65,34 +86,29 @@ def load_snapshot():
 
     print(f"从快照加载了 {len(snapshot.get('methods', []))} 个方法")
 
-def init_registry(dirs=None, dev_mode=True):
-    """
-    dev_mode=True 时扫描目录导入，注册完成后保存快照
-    dev_mode=False 时直接加载快照，避免运行时扫描
-    """
-    if dev_mode:
-        if dirs is None:
-            dirs = ["system"]
 
-        base_dir = os.path.dirname(__file__)
-        for dir_name in dirs:
-            dir_path = os.path.join(base_dir, dir_name)
-            if not os.path.isdir(dir_path):
-                print(f"目录不存在，跳过: {dir_path}")
-                continue
+def init_registry():
+    if not os.path.isdir(PLUGINS_DIR):
+        print(f"插件目录不存在，跳过扫描: {PLUGINS_DIR}")
+        return
 
-            for filename in os.listdir(dir_path):
-                if filename.endswith(".py") and not filename.startswith("__"):
-                    module_name = f"tools.{dir_name}.{filename[:-3]}"
-                    importlib.import_module(module_name)
+    sub_dirs = [d for d in os.listdir(PLUGINS_DIR) if os.path.isdir(os.path.join(PLUGINS_DIR, d))]
+    print("扫描路径为：", PLUGINS_DIR)
 
-        # 只在开发时保存快照，避免每次启动都写文件
-        save_snapshot()
-    else:
-        load_snapshot()
+    for sub_dir in sub_dirs:
+        dir_path = os.path.join(PLUGINS_DIR, sub_dir)
+        for filename in os.listdir(dir_path):
+            if filename.endswith(".py") and not filename.startswith("__"):
+                module_name = filename[:-3]
+                full_module = f"plugins.{sub_dir}.{module_name}"
+                try:
+                    importlib.import_module(full_module)
+                except Exception as e:
+                    print(f"加载模块 {full_module} 失败: {e}")
+
+    save_snapshot()
+    print(f"已加载 {len(METHOD_REGISTRY)} 个方法")
 
 def is_dev_mode():
     import sys
-    if getattr(sys, "frozen", False):
-        return False
-    return True
+    return not getattr(sys, "frozen", False)

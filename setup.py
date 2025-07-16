@@ -1,14 +1,25 @@
 from cx_Freeze import setup, Executable
-from tools.rpc_registry import init_registry
+from rpc_registry import init_registry
+import os
 
-# 先生成快照文件
-init_registry(dev_mode=True)
+# 预先生成快照文件
+init_registry()
 
 build_exe_options = {
-    "packages": ["tools", "ui", "agent", "api_server"],  # 你的模块
+    "packages": [
+        "ui", "agent", "api_server",
+        "uvicorn", "uvicorn.protocols", "uvicorn.loops"
+    ],
+    "includes": [
+        "uvicorn.protocols.http.auto",
+        "uvicorn.protocols.http.h11_impl",
+        "uvicorn.protocols.http.httptools_impl",
+        "uvicorn.loops.asyncio",
+    ],
     "include_files": [
         ("runtime/method_registry_snapshot.json", "runtime/method_registry_snapshot.json"),
-        ("assets", "assets"),
+        ("ui/assets", "ui/assets"),
+        ("plugins", "plugins")
     ]
 }
 
@@ -17,5 +28,8 @@ setup(
     version="1.0",
     description="AI Agent Desktop App",
     options={"build_exe": build_exe_options},
-    executables=[Executable("main.py", base="Win32GUI", target_name="ag.exe")]
+    executables=[
+        Executable("main_gui.py", base="Win32GUI", target_name="ag_gui.exe"),
+        Executable("main_cli.py", base=None,      target_name="ag_cli.exe"),
+    ]
 )

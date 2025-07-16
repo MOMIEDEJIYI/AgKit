@@ -1,6 +1,6 @@
 import os
 import re
-from tools.rpc_registry import register_method
+from rpc_registry import register_method
 
 @register_method("read_file", param_desc={"file_name": "文件名"})
 def read_file(params: dict) -> dict:
