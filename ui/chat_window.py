@@ -226,27 +226,49 @@ class ChatWindow(QWidget):
         self.input_edit.setEnabled(True)
         self.input_edit.clear()
         self.cancel_button.setEnabled(False)
+
     def on_delete_session(self):
         current_item = self.session_list.currentItem()
         if not current_item:
             return
         file_name = current_item.text()
-        self.service.delete_session(file_name)  # 通过服务层删除
-        
-        row = self.session_list.row(current_item)
-        self.session_list.takeItem(row)
-        
-        # 刷新UI列表和切换会话显示
+
+        # 删除会话文件
+        self.service.delete_session(file_name)
+
+        # 清空UI列表
+        self.session_list.clear()
+
+        # 重新加载剩余会话列表
         sessions = self.service.manager.list_sessions()
+        print("剩余会话列表:", sessions)
+
+        self.session_list.addItems(sessions)
+
         if sessions:
-            self.service.manager.switch_session(sessions[0])
+            first_session = sessions[0]
+            print("切换到会话:", first_session)
+            self.service.manager.switch_session(first_session)
             self.load_history()
-            items = self.session_list.findItems(sessions[0], Qt.MatchFlag.MatchExactly)
+
+            # 选中第一个会话
+            items = self.session_list.findItems(first_session, Qt.MatchFlag.MatchExactly)
             if items:
                 self.session_list.setCurrentItem(items[0])
+            else:
+                print("警告：找不到对应的列表项")
         else:
+            print("没有会话了，自动新建一个")
             new_session = self.service.manager.create_session("你是遵守 JSON-RPC 2.0 协议的智能助手")
             self.session_list.addItem(new_session)
             self.service.manager.switch_session(new_session)
             self.load_history()
+            items = self.session_list.findItems(new_session, Qt.MatchFlag.MatchExactly)
+            if items:
+                self.session_list.setCurrentItem(items[0])
+            else:
+                print("警告：新建的会话列表项没有找到")
+
+
+
 
