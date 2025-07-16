@@ -4,8 +4,9 @@ import argparse
 from PyQt5.QtWidgets import QApplication
 from ui.chat_window import ChatWindow
 
+# 导入初始化注册
+from tools.rpc_registry import init_registry, METHOD_REGISTRY, METHOD_DOCS, is_dev_mode
 def print_registered_methods():
-    from tools.rpc_registry import METHOD_REGISTRY, METHOD_DOCS
     print("📌 已注册的 JSON-RPC 方法:")
     for name in sorted(METHOD_REGISTRY.keys()):
         func = METHOD_REGISTRY[name]
@@ -17,6 +18,8 @@ def print_registered_methods():
                 print(f"     • {k}: {v}")
 
 if __name__ == "__main__":
+    # 先初始化注册
+    init_registry(dev_mode=is_dev_mode())
     parser = argparse.ArgumentParser()
     parser.add_argument("--no-ui", action="store_true", help="不加载 UI，仅打印方法")
     args = parser.parse_args()
@@ -30,5 +33,5 @@ if __name__ == "__main__":
     app = QApplication(sys.argv)
     window = ChatWindow()
     window.resize(900, 600)
-    window.show_with_animation()   # 使用带动画的显示方式
+    window.show_with_animation()
     sys.exit(app.exec())

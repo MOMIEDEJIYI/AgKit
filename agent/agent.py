@@ -116,7 +116,7 @@ class Agent:
         return response.choices[0].message.content.strip()
     
     def ask_stream(self, history_messages: list[dict], known_methods=None, extra_prompt=None, check_cancel=lambda: False) -> str:
-      print(f"agent ask_stream check_cancel: {check_cancel}")
+      print(f"agent ask_stream")
       system_prompt = self.system_prompt
       if known_methods:
           system_prompt += "\n\n请仅使用以下方法名之一调用 JSON-RPC 接口："

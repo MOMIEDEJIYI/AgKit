@@ -21,7 +21,6 @@ def handle_rpc_request(raw_text: str) -> dict | None:
         params = request.get("params", {})
         request_id = request.get("id", None)
 
-        from tools.rpc_registry import METHOD_REGISTRY
         handler = METHOD_REGISTRY.get(method)
         if not handler:
             return {

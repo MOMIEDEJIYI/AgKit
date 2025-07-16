@@ -6,7 +6,7 @@ from PyQt5.QtWidgets import (
     QListWidget, QTextEdit, QLineEdit, QPushButton, QApplication
 )
 from PyQt5.QtCore import Qt, QPropertyAnimation, QRect, QEasingCurve
-from tools.worker_thread import WorkerThread
+from agent.worker_thread import WorkerThread
 from agent.agent_service import AgentService
 
 class ChatWindow(QWidget):
