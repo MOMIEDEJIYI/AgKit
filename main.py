@@ -1,11 +1,11 @@
 import sys
-import os
 import argparse
 from PyQt5.QtWidgets import QApplication
 from ui.chat_window import ChatWindow
+from tools.rpc_registry import init_registry, is_dev_mode, METHOD_REGISTRY, METHOD_DOCS
+from api_server import create_api_app
+import uvicorn
 
-# 导入初始化注册
-from tools.rpc_registry import init_registry, METHOD_REGISTRY, METHOD_DOCS, is_dev_mode
 def print_registered_methods():
     print("📌 已注册的 JSON-RPC 方法:")
     for name in sorted(METHOD_REGISTRY.keys()):
@@ -18,16 +18,21 @@ def print_registered_methods():
                 print(f"     • {k}: {v}")
 
 if __name__ == "__main__":
-    # 先初始化注册
+    # 注册方法
     init_registry(dev_mode=is_dev_mode())
+
+    # 解析 CLI 参数
     parser = argparse.ArgumentParser()
-    parser.add_argument("--no-ui", action="store_true", help="不加载 UI，仅打印方法")
+    parser.add_argument("--no-ui", action="store_true", help="不加载 UI，仅作为 API 服务运行")
+    parser.add_argument("--host", type=str, default="127.0.0.1", help="API 监听地址")
+    parser.add_argument("--port", type=int, default=8000, help="API 监听端口")
     args = parser.parse_args()
 
-    print_registered_methods()
-
+    # 无 UI 模式下挂载 API 服务
     if args.no_ui:
-        print("✅ CLI 模式：未加载 UI")
+        app = create_api_app()
+        print(f"启动 FastAPI JSON 服务：http://{args.host}:{args.port}/chat")
+        uvicorn.run(app, host=args.host, port=args.port)
         sys.exit(0)
 
     app = QApplication(sys.argv)
