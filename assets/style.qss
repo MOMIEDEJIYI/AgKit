@@ -1,30 +1,47 @@
 QWidget {
-    background-color: #f0f0f0;
-    font-family: "Comic Sans MS", cursive, sans-serif;
+    background-color: #f4f6f8;
+    color: #2c3e50;
+    font-family: "Segoe UI", sans-serif;
     font-size: 14px;
 }
+
 QPushButton {
-    background-color: #ffcc00;
-    border-radius: 8px;
-    padding: 6px 12px;
-    font-weight: bold;
+    background-color: #3498db;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    padding: 6px 14px;
+    font-weight: 500;
 }
 QPushButton:hover {
-    background-color: #ffaa00;
+    background-color: #2980b9;
 }
+QPushButton:disabled {
+    background-color: #bdc3c7;
+    color: white;
+}
+
 QListWidget {
-    background-color: #fff8dc;
-    border: 1px solid #e0d68a;
-    border-radius: 6px;
-}
-QTextEdit {
-    background-color: #fffaf0;
-    border: 1px solid #e0d68a;
-    border-radius: 6px;
-}
-QLineEdit {
     background-color: #ffffff;
-    border: 1px solid #dcdcdc;
+    border: 1px solid #dcdfe3;
     border-radius: 6px;
     padding: 4px;
+}
+
+QTextEdit {
+    background-color: #ffffff;
+    border: 1px solid #dcdfe3;
+    border-radius: 6px;
+    padding: 6px;
+}
+
+QLineEdit {
+    background-color: #ffffff;
+    color: #2c3e50;
+    border: 1px solid #ced4da;
+    border-radius: 6px;
+    padding: 6px;
+}
+QLineEdit:focus {
+    border: 1px solid #3498db;
 }
