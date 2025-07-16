@@ -187,7 +187,7 @@ class ChatWindow(QWidget):
         self.input_edit.setEnabled(False)
         self.cancel_button.setEnabled(True)
 
-        self.thread = WorkerThread(user_text, self.service)
+        self.thread = WorkerThread(user_text, self.service, stream_mode=True)
         self.thread.finished.connect(self.on_agent_response)
         self.thread.error.connect(self.on_agent_error)
         self.thread.thinking.connect(self.show_thinking_message)
