@@ -6,21 +6,17 @@ from PyQt5.QtWidgets import (
     QListWidget, QTextEdit, QLineEdit, QPushButton, QApplication
 )
 from PyQt5.QtCore import Qt, QPropertyAnimation, QRect, QEasingCurve
-from conversation.manager import ConversationManager
 from tools.worker_thread import WorkerThread
 from agent.agent import Agent
-from orchestrator import AgentOrchestrator
+from agent.agent_service import AgentService
+from agent.orchestrator import AgentOrchestrator
 
 class ChatWindow(QWidget):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("TA")
 
-        self.manager = ConversationManager()
-        if not self.manager.list_sessions():
-            self.manager.create_session("你是遵守 JSON-RPC 2.0 协议的智能助手，返回符合规范的 JSON-RPC 请求。")
-        else:
-            self.manager.switch_session(self.manager.list_sessions()[0])
+        self.service = AgentService()
 
         main_layout = QHBoxLayout(self)
 
@@ -30,7 +26,7 @@ class ChatWindow(QWidget):
         self.new_session_button.clicked.connect(self.on_new_session)
 
         self.session_list = QListWidget()
-        self.session_list.addItems(self.manager.list_sessions())
+        self.session_list.addItems(self.service.manager.list_sessions())
         self.session_list.setMaximumWidth(220)
         left_layout.addWidget(self.session_list)
 
@@ -66,13 +62,10 @@ class ChatWindow(QWidget):
 
         self.load_history()
 
-        current_file = self.manager.current_session["file"]
+        current_file = self.service.manager.current_session["file"]
         items = self.session_list.findItems(current_file, Qt.MatchFlag.MatchExactly)
         if items:
             self.session_list.setCurrentItem(items[0])
-
-        self.agent = Agent()
-        self.orchestrator = AgentOrchestrator(self.agent)
 
         self._apply_stylesheet()
 
@@ -123,9 +116,9 @@ class ChatWindow(QWidget):
         return sorted(METHOD_REGISTRY.keys())
 
     def on_new_session(self):
-        file_name = self.manager.create_session("你是遵守 JSON-RPC 2.0 协议的智能助手，返回符合规范的 JSON-RPC 请求。")
+        file_name = self.service.manager.create_session("你是遵守 JSON-RPC 2.0 协议的智能助手，返回符合规范的 JSON-RPC 请求。")
         self.session_list.addItem(file_name)
-        self.manager.switch_session(file_name)
+        self.service.manager.switch_session(file_name)
         self.load_history()
         items = self.session_list.findItems(file_name, Qt.MatchFlag.MatchExactly)
         if items:
@@ -133,7 +126,7 @@ class ChatWindow(QWidget):
 
     def load_history(self):
         self.chat_display.clear()
-        history = self.manager.get_history()
+        history = self.service.manager.get_history()
         for msg in history:
             role = msg["role"]
             if role == "system":
@@ -181,88 +174,85 @@ class ChatWindow(QWidget):
     def on_session_changed(self, current, previous):
         if current:
             file_name = current.text()
-            self.manager.switch_session(file_name)
+            self.service.manager.switch_session(file_name)
             self.load_history()
 
     def on_send(self):
+        print("ui on_send triggered")
         user_text = self.input_edit.text().strip()
         if not user_text:
             return
-
-        self.manager.add_message("user", user_text)
-        self.load_history()
-
-        history = self.manager.get_history()
 
         self.send_button.setEnabled(False)
         self.input_edit.setEnabled(False)
         self.cancel_button.setEnabled(True)
 
-        self.thread = WorkerThread(history)
+        self.thread = WorkerThread(user_text, self.service)
         self.thread.finished.connect(self.on_agent_response)
         self.thread.error.connect(self.on_agent_error)
         self.thread.thinking.connect(self.show_thinking_message)
         self.thread.start()
 
+
     def on_cancel(self):
         if hasattr(self, "thread") and self.thread.isRunning():
-            print("🛑 用户点击取消按钮，尝试停止线程")
             self.thread.stop()
             self.cancel_button.setEnabled(False)
             self.chat_display.append("🛑 已取消当前任务\n")
 
+
     def show_thinking_message(self, msg):
         self.chat_display.append(msg + "\n")
 
-    def on_agent_response(self, final_response):
-        self.manager.add_message("assistant", final_response)
+    def on_agent_response(self):
         self.load_history()
         self.send_button.setEnabled(True)
         self.input_edit.setEnabled(True)
         self.input_edit.clear()
         self.cancel_button.setEnabled(False)
+
 
     def on_agent_error(self, error_msg):
-        self.manager.add_message("assistant", error_msg)
+        self.service.manager.add_message("assistant", error_msg)
         self.load_history()
         self.send_button.setEnabled(True)
         self.input_edit.setEnabled(True)
         self.input_edit.clear()
         self.cancel_button.setEnabled(False)
 
-    def on_agent_response(self, first_response):
-        print("Agent response:", first_response)
-        try:
-            final_answer = self.orchestrator.run_task(self.manager.get_history(), first_response)
+    # def on_agent_response(self, first_response):
+    #     print("Agent response:", first_response)
+    #     try:
+    #         final_answer = self.service.orchestrator.run_task(self.service.manager.get_history(), first_response)
 
-            self.manager.add_message("assistant", final_answer)
-            self.load_history()
+    #         self.service.manager.add_message("assistant", final_answer)
+    #         self.load_history()
 
-        except Exception as e:
-            self.manager.add_message("assistant", f"执行任务出错：{str(e)}")
-            self.load_history()
-        finally:
-            self.send_button.setEnabled(True)
-            self.input_edit.setEnabled(True)
-            self.input_edit.clear()
+    #     except Exception as e:
+    #         self.service.manager.add_message("assistant", f"执行任务出错：{str(e)}")
+    #         self.load_history()
+    #     finally:
+    #         self.send_button.setEnabled(True)
+    #         self.input_edit.setEnabled(True)
+    #         self.input_edit.clear()
 
     def on_delete_session(self):
         current_item = self.session_list.currentItem()
         if not current_item:
             return
         file_name = current_item.text()
-        self.manager.delete_session(file_name)
+        self.service.manager.delete_session(file_name)
         row = self.session_list.row(current_item)
         self.session_list.takeItem(row)
-        sessions = self.manager.list_sessions()
+        sessions = self.service.manager.list_sessions()
         if sessions:
-            self.manager.switch_session(sessions[0])
+            self.service.manager.switch_session(sessions[0])
             self.load_history()
             items = self.session_list.findItems(sessions[0], Qt.MatchFlag.MatchExactly)
             if items:
                 self.session_list.setCurrentItem(items[0])
         else:
-            file_name = self.manager.create_session("你是遵守 JSON-RPC 2.0 协议的智能助手，返回符合规范的 JSON-RPC 请求。")
+            file_name = self.service.manager.create_session("你是遵守 JSON-RPC 2.0 协议的智能助手，返回符合规范的 JSON-RPC 请求。")
             self.session_list.addItem(file_name)
-            self.manager.switch_session(file_name)
+            self.service.manager.switch_session(file_name)
             self.load_history()

@@ -85,6 +85,7 @@ class Agent:
     def available_methods(self, methods):
         self._available_methods = methods
     def ask(self, history_messages: list[dict], known_methods=None, extra_prompt=None) -> str:
+        print(f"agent ask= history_messages: {history_messages} known_methods: {known_methods} extra_prompt:")
         system_prompt = self.system_prompt
         if known_methods:
             system_prompt += "\n\n请仅使用以下方法名之一调用 JSON-RPC 接口："

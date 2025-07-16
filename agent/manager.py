@@ -4,8 +4,8 @@ import json
 from datetime import datetime
 
 class ConversationManager:
-    def __init__(self, history_dir="conversation/history"):
-        self.history_dir = history_dir
+    def __init__(self, user_id="default"):
+        self.history_dir = f"conversation/history/{user_id}"
         os.makedirs(self.history_dir, exist_ok=True)
         self.current_session = None
         self.sessions = self._load_sessions()
@@ -17,7 +17,6 @@ class ConversationManager:
     def create_session(self, system_prompt: str):
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         file_name = f"session_{timestamp}.json"
-        path = os.path.join(self.history_dir, file_name)
         self.current_session = {
             "file": file_name,
             "history": [{"role": "system", "content": system_prompt}],
