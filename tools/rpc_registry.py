@@ -6,7 +6,7 @@ import sys
 METHOD_REGISTRY = {}
 METHOD_DOCS = {}  # 存参数说明
 
-base_dir = os.path.dirname(sys.argv[0])
+base_dir = getattr(sys, "_MEIPASS", os.path.dirname(sys.argv[0]))
 SNAPSHOT_PATH = os.path.join(base_dir, "runtime", "method_registry_snapshot.json")
 
 def register_method(name, param_desc=None):

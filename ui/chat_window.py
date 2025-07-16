@@ -1,6 +1,7 @@
 import json
 import re
 import os
+import sys
 from PyQt5.QtWidgets import (
     QWidget, QHBoxLayout, QVBoxLayout,
     QListWidget, QTextEdit, QLineEdit, QPushButton, QApplication
@@ -9,10 +10,18 @@ from PyQt5.QtCore import Qt, QPropertyAnimation, QRect, QEasingCurve
 from agent.worker_thread import WorkerThread
 from agent.agent_service import AgentService
 
+def resource_path(relative_path):
+    if hasattr(sys, '_MEIPASS'):  # 打包时临时目录
+        base_path = sys._MEIPASS
+    else:
+        base_path = os.path.abspath(os.path.dirname(__file__))  # 当前文件夹
+
+    return os.path.join(base_path, relative_path)
+
 class ChatWindow(QWidget):
     def __init__(self):
         super().__init__()
-        self.setWindowTitle("TA")
+        self.setWindowTitle("AG")
 
         self.service = AgentService()
 
@@ -68,7 +77,8 @@ class ChatWindow(QWidget):
         self._apply_stylesheet()
 
     def _apply_stylesheet(self):
-        style_path = os.path.join(os.path.dirname(__file__), "../assets/style.qss")
+        style_path = resource_path("assets\styles\style.qss")
+        print(f"Loading style from: {style_path}")
         if os.path.exists(style_path):
             with open(style_path, "r", encoding="utf-8") as f:
                 QApplication.instance().setStyleSheet(f.read())
