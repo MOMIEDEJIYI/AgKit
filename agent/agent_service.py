@@ -2,7 +2,9 @@
 from agent.manager import ConversationManager
 from agent.orchestrator import AgentOrchestrator
 from agent.agent import Agent
+import logging
 
+logger = logging.getLogger(__name__)
 class AgentService:
     def __init__(self, user_id="default"):
         self._cancel_flag = False
@@ -16,7 +18,7 @@ class AgentService:
             self.manager.switch_session(self.manager.list_sessions()[0])
 
     def stop(self):
-        print("AgentService: 设置取消标志")
+        logger.info("AgentService: 设置取消标志")
         self._cancel_flag = True
 
     def is_cancelled(self):
@@ -101,7 +103,7 @@ class AgentService:
         return final_response
 
     def delete_session(self, file_name: str):
-        print(f"AgentService: 删除会话 {file_name}")
+        logger.info(f"AgentService: 删除会话 {file_name}")
         self.manager.delete_session(file_name)
         if not self.manager.current_session:
             sessions = self.manager.list_sessions()

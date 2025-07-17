@@ -12,10 +12,10 @@ from agent.agent_service import AgentService
 from ui.components.http_request_config_dialog import HttpRequestConfigDialog
 
 def resource_path(relative_path):
-    if hasattr(sys, '_MEIPASS'):  # 打包时临时目录
+    if hasattr(sys, '_MEIPASS'):
         base_path = sys._MEIPASS
     else:
-        base_path = os.path.abspath(os.path.dirname(__file__))  # 当前文件夹
+        base_path = os.path.abspath(os.path.dirname(__file__))
 
     return os.path.join(base_path, relative_path)
 

@@ -2,12 +2,16 @@
 import os
 import json
 from datetime import datetime
+import logging
+
+logger = logging.getLogger(__name__)
 
 class ConversationManager:
     def __init__(self, user_id="default"):
         self.history_dir = f"conversation/history/{user_id}"
         os.makedirs(self.history_dir, exist_ok=True)
         self.current_session = None
+        logger.info(f"[ConversationManager] 正在加载 {user_id} 的对话记录...")
         self.sessions = self._load_sessions()
 
     def _load_sessions(self):

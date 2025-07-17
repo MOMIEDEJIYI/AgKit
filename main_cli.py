@@ -1,17 +1,30 @@
 # main_api.py
-from rpc_registry import init_registry, is_dev_mode
-from api_server import create_api_app
+from rpc_registry import init_registry
+from api.api_server import create_api_app
 import uvicorn
+import socket
+
+def find_free_port(start_port=8000, max_port=8100):
+    port = start_port
+    while port <= max_port:
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+            try:
+                s.bind(("127.0.0.1", port))
+                return port
+            except OSError:
+                port += 1
+    raise RuntimeError(f"No free port found between {start_port} and {max_port}")
 
 if __name__ == "__main__":
     init_registry()
 
     app = create_api_app()
-    print("启动 FastAPI JSON 服务：http://127.0.0.1:8000/chat")
+    port = find_free_port(8000, 8100)
+    print(f"启动 FastAPI JSON 服务：http://127.0.0.1:{port}")
     uvicorn.run(
         app,
         host="127.0.0.1",
-        port=8000,
+        port=port,
         log_level="info",
         log_config=None,
         use_colors=False

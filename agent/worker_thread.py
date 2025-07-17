@@ -1,5 +1,7 @@
 from PyQt5.QtCore import QThread, pyqtSignal
+import logging
 
+logger = logging.getLogger(__name__)
 class WorkerThread(QThread):
     finished = pyqtSignal(str)
     error = pyqtSignal(str)
@@ -34,7 +36,7 @@ class WorkerThread(QThread):
             self.error.emit(str(e))
 
     def stop(self):
-        print("WorkerThread: 停止请求")
+        logger.info("WorkerThread: 停止请求")
         self.agent_service.stop()
 
     def check_cancel(self):

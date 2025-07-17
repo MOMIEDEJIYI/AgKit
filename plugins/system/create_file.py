@@ -3,9 +3,12 @@ from rpc_registry import register_method
 
 @register_method("create_file", param_desc={"file_name": "文件名", "content": "文件内容", "extension": "文件扩展名"})
 def create_file(params: dict) -> dict:
-    file_name = params.get("file_name", "")
+    file_name = params.get("file_name") or params.get("filename", "")
     content = params.get("content", "")
     extension = params.get("extension", "txt")
+
+    if not file_name:
+        return {"content": "❌ 缺少文件名", "done": True}
 
     name, ext_in_name = os.path.splitext(file_name)
     if not ext_in_name:
