@@ -5,13 +5,15 @@ from rpc_registry import register_method
 
 @register_method(
     name="system.read_file",
-    param_desc={"file_name": "文件名"}, 
-    needs_nlg=True, # 二次自然语言包装
+    param_desc={"file_name": "文件名", "extension": "文件扩展名"}, 
+    needs_nlg=True,
 )
 def read_file(params: dict) -> dict:
     file_name = params.get("file_name", "")
+    extension = params.get("extension", "")  # 获取扩展名
+    full_file_name = f"{file_name}.{extension}" if extension else file_name
     try:
-        with open(file_name, "r", encoding="utf-8") as f:
+        with open(full_file_name, "r", encoding="utf-8") as f:
             return {"content": f.read(), "done": True}
     except Exception as e:
         return {"content": f"❌ 读取失败：{e}", "done": True}

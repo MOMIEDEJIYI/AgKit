@@ -2,6 +2,7 @@
 from agent.manager import ConversationManager
 from agent.orchestrator import AgentOrchestrator
 from agent.agent import Agent
+from utils import utils
 import logging
 
 logger = logging.getLogger(__name__)
@@ -57,7 +58,8 @@ class AgentService:
         if progress_callback:
             progress_callback("添加助手回复到历史...")
         if isinstance(final_response, dict):
-            self.manager.add_message("assistant", final_response.get("text", ""))
+            clean_text = utils.process_assistant_content(final_response.get("text", ""))
+            self.manager.add_message("assistant", clean_text)
         else:
             self.manager.add_message("assistant", final_response)
 
@@ -99,7 +101,8 @@ class AgentService:
             progress_callback("添加助手回复到历史...")
 
         if isinstance(final_response, dict):
-            self.manager.add_message("assistant", final_response.get("text", ""))
+            clean_text = utils.process_assistant_content(final_response.get("text", ""))
+            self.manager.add_message("assistant", clean_text)
         else:
             self.manager.add_message("assistant", final_response)
 

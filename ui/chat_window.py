@@ -3,13 +3,15 @@ import re
 import os
 import sys
 from PyQt5.QtWidgets import (
-    QWidget, QHBoxLayout, QVBoxLayout,
-    QListWidget, QTextEdit, QLineEdit, QPushButton, QApplication, QDialog
+    QWidget, QHBoxLayout, QVBoxLayout, QLabel,
+    QListWidget, QScrollArea, QLineEdit, QPushButton, QApplication, QDialog
 )
 from PyQt5.QtCore import Qt, QPropertyAnimation, QRect, QEasingCurve
 from agent.worker_thread import WorkerThread
 from agent.agent_service import AgentService
 from ui.components.http_request_config_dialog import HttpRequestConfigDialog
+from ui.components.chat_bubble import ChatBubble
+from utils import utils
 
 def resource_path(relative_path):
     if hasattr(sys, '_MEIPASS'):
@@ -57,9 +59,16 @@ class ChatWindow(QWidget):
         right_layout.insertWidget(0, self.delete_button)
         self.delete_button.clicked.connect(self.on_delete_session)
 
-        self.chat_display = QTextEdit()
-        self.chat_display.setReadOnly(True)
-        right_layout.addWidget(self.chat_display)
+        # 替换 QTextEdit 为 QScrollArea+QWidget布局
+        self.chat_area = QScrollArea()
+        self.chat_area.setWidgetResizable(True)
+        self.chat_container = QWidget()
+        self.chat_layout = QVBoxLayout(self.chat_container)
+        self.chat_layout.addStretch()  # 让消息靠上排列，底部有弹簧
+
+        self.chat_area.setWidget(self.chat_container)
+
+        right_layout.addWidget(self.chat_area)
 
         input_layout = QHBoxLayout()
         self.input_edit = QLineEdit()
@@ -86,6 +95,11 @@ class ChatWindow(QWidget):
         if items:
             self.session_list.setCurrentItem(items[0])
 
+        # 新增一个思考中显示区
+        self.thinking_label = QLabel()
+        self.thinking_label.setStyleSheet("color: gray; font-style: italic;")
+        right_layout.addWidget(self.thinking_label)
+
         self._apply_stylesheet()
 
     def _apply_stylesheet(self):
@@ -94,6 +108,13 @@ class ChatWindow(QWidget):
         if os.path.exists(style_path):
             with open(style_path, "r", encoding="utf-8") as f:
                 QApplication.instance().setStyleSheet(f.read())
+
+    def add_chat_bubble(self, text, is_user):
+        bubble = ChatBubble(text, is_user)
+        # 插入到倒数第二个位置，保持底部弹簧在最底部
+        self.chat_layout.insertWidget(self.chat_layout.count() - 1, bubble)
+        # 滚动到底部
+        self.chat_area.verticalScrollBar().setValue(self.chat_area.verticalScrollBar().maximum())
 
     def show_with_animation(self):
         screen = self.screen().availableGeometry()
@@ -148,52 +169,24 @@ class ChatWindow(QWidget):
             self.session_list.setCurrentItem(items[0])
 
     def load_history(self):
-        self.chat_display.clear()
+        for i in reversed(range(self.chat_layout.count() - 1)):  # 保留底部弹簧
+            widget = self.chat_layout.itemAt(i).widget()
+            if widget:
+                widget.setParent(None)
+
         history = self.service.manager.get_history()
         for msg in history:
             role = msg["role"]
             if role == "system":
                 continue
             content = msg["content"]
-            display_role = "你" if role == "user" else "助手"
+            is_user = (role == "user")
 
-            try:
-                m = re.search(r"```json\s*(\{.*?\})\s*```", content, re.DOTALL)
-                if m:
-                    content_json_str = m.group(1)
-                else:
-                    content_json_str = content
+            if not is_user:
+                # 解析AI内容
+                content = utils.process_assistant_content(content)
 
-                parsed = json.loads(content_json_str)
-
-                if isinstance(parsed, dict) and "explanation" in parsed:
-                    explanation = parsed["explanation"]
-                    extra = ""
-
-                    jsonrpc = parsed.get("jsonrpc")
-                    if isinstance(jsonrpc, dict):
-                        result = jsonrpc.get("result")
-                        if isinstance(result, dict):
-                            extra = result.get("message") or result.get("content") or ""
-
-                    if extra:
-                        if isinstance(extra, (dict, list)):
-                            import json as json_mod
-                            extra = json_mod.dumps(extra, ensure_ascii=False, indent=2)
-                        max_len = 1000
-                        if len(extra) > max_len:
-                            extra = extra[:max_len] + "\n...（内容过长，已截断）"
-
-                    full_text = f"{display_role}: {explanation}"
-                    if extra and extra.strip() not in explanation:
-                        full_text += f"\n{extra}"
-
-                    self.chat_display.append(full_text + "\n")
-                else:
-                    self.chat_display.append(f"{display_role}: {content}\n")
-            except Exception:
-                self.chat_display.append(f"{display_role}: {content}\n")
-
+            self.add_chat_bubble(content, is_user)
     def on_session_changed(self, current, previous):
         if current:
             file_name = current.text()
@@ -201,11 +194,13 @@ class ChatWindow(QWidget):
             self.load_history()
 
     def on_send(self):
-        print("ui on_send triggered")
         user_text = self.input_edit.text().strip()
         if not user_text:
             return
 
+        self.add_chat_bubble(user_text, is_user=True)  # 显示用户消息气泡
+
+        # 这里正常发送消息，禁用按钮，启动线程等...
         self.send_button.setEnabled(False)
         self.input_edit.setEnabled(False)
         self.cancel_button.setEnabled(True)
@@ -215,6 +210,8 @@ class ChatWindow(QWidget):
         self.thread.error.connect(self.on_agent_error)
         self.thread.thinking.connect(self.show_thinking_message)
         self.thread.start()
+
+        self.input_edit.clear()
 
     def open_http_request_config(self):
         dialog = HttpRequestConfigDialog(self)
@@ -228,10 +225,10 @@ class ChatWindow(QWidget):
         if hasattr(self, "thread") and self.thread.isRunning():
             self.thread.stop()
             self.cancel_button.setEnabled(False)
-            self.chat_display.append("已取消当前任务\n")
+            self.add_chat_bubble("已取消当前任务", is_user=False)
 
     def show_thinking_message(self, msg):
-        self.chat_display.append(msg + "\n")
+        self.thinking_label.setText(msg)
 
     def on_agent_response(self):
         self.load_history()
