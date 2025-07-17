@@ -71,7 +71,8 @@ class AgentOrchestrator:
                     ]
                     response = ask_func(current_history, check_cancel=check_cancel)
 
-                    if rpc_response.get("result", {}).get("done") is True:
+                    # 如果没有done字段，避免循环
+                    if rpc_response.get("result") is None or rpc_response.get("result").get("done") is True:
                         break
 
                     continue
