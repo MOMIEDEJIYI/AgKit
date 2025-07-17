@@ -3,6 +3,7 @@ import os
 import json
 from datetime import datetime
 import logging
+from utils import utils
 
 logger = logging.getLogger(__name__)
 
@@ -38,6 +39,9 @@ class ConversationManager:
         return self.current_session["history"]
 
     def add_message(self, role, content):
+        if role == "assistant":
+            # 例如提取 explanation，或者剥离代码块
+            content = utils.extract_json_from_text(content)
         self.current_session["history"].append({"role": role, "content": content})
         self._save()
 

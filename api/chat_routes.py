@@ -1,6 +1,7 @@
 from fastapi import APIRouter
 from pydantic import BaseModel
 from typing import Optional
+from typing import Any
 from fastapi.concurrency import run_in_threadpool
 from agent.agent_service import AgentService
 import logging
@@ -16,7 +17,7 @@ def get_chat_router(get_agent_service):
 
     class ChatResponse(BaseModel):
         success: bool
-        reply: Optional[str] = None
+        reply: Optional[Any] = None
         session_id: Optional[str] = None
         error: Optional[str] = None
 

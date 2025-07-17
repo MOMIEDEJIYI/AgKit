@@ -12,6 +12,7 @@ class AgentOrchestrator:
 
     def _run_task_common(self, history, ask_func, first_response=None, check_cancel=lambda: False):
         current_history = history[:]
+        tool_result = None
         response = first_response or ask_func(current_history, check_cancel=check_cancel)
         print("_run_task_common response: %s", response)
 
@@ -42,8 +43,16 @@ class AgentOrchestrator:
 
                     direct_response = METHOD_FLAGS.get(method_name, {}).get("direct_response", False)
                     if direct_response:
-                        print(f"🔔 方法 {method_name} 标记为 direct_response，直接返回结果：{rpc_response}")
-                        return rpc_response.get("result") or {}
+                        print(f"🔔 方法 {method_name} 标记为 direct_response，结果为：{rpc_response}")
+                        tool_result = rpc_response.get('result', {})
+                        current_history += [
+                            {"role": "assistant", "content": json.dumps(response, ensure_ascii=False)},
+                            {"role": "system", "content": f"工具函数已执行，结果为：{json.dumps(rpc_response.get('result', {}), ensure_ascii=False)}"}
+                        ]
+
+                        response = ask_func(current_history, check_cancel=check_cancel)
+                        break
+
 
                     if rpc_response is None:
                         print("ℹ️ 请求是通知类型，无需响应")
@@ -71,7 +80,11 @@ class AgentOrchestrator:
             except Exception as e:
                 logger.error("❌ 出现异常: %s", str(e))
                 return f"❌ 出现异常：{str(e)}"
-
+        if tool_result is not None:
+            return {
+                "text": response,
+                "tool_result": tool_result
+            }
         return response
 
     def run_task_sync(self, history, first_response=None, check_cancel=lambda: False):

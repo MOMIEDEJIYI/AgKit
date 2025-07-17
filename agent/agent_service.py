@@ -56,7 +56,10 @@ class AgentService:
 
         if progress_callback:
             progress_callback("添加助手回复到历史...")
-        self.manager.add_message("assistant", final_response)
+        if isinstance(final_response, dict):
+            self.manager.add_message("assistant", final_response.get("text", ""))
+        else:
+            self.manager.add_message("assistant", final_response)
 
         if progress_callback:
             progress_callback("任务完成。")
@@ -95,7 +98,10 @@ class AgentService:
         if progress_callback:
             progress_callback("添加助手回复到历史...")
 
-        self.manager.add_message("assistant", final_response)
+        if isinstance(final_response, dict):
+            self.manager.add_message("assistant", final_response.get("text", ""))
+        else:
+            self.manager.add_message("assistant", final_response)
 
         if progress_callback:
             progress_callback("流式任务完成。")

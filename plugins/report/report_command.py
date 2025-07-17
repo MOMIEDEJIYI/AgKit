@@ -6,8 +6,8 @@ from rpc_registry import register_method
   param_desc={},
   direct_response=True
 )
-def send_ui_command(params=None) -> dict:
+def send_ui_command_export(params=None) -> dict:
   return {
       "type": "ui_command",
-      "command": "export_json",
+      "command": "exportJsonFile",
   }
