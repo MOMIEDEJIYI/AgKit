@@ -12,7 +12,8 @@ def send_ui_command_create_sales_report(params=None) -> dict:
       "type": "ui_command",
       "command": "createNewReport",
       "params": {
-        "id": "sales"
+        "id": "sales",
+        "name": "销售报表"
       },
   }
 
@@ -27,7 +28,8 @@ def send_ui_command_create_inventory_report(params=None) -> dict:
       "type": "ui_command",
       "command": "createNewReport",
       "params": {
-        "id": "inventory"
+        "id": "inventory",
+        "name": "库存报表"
       },
   }
 
@@ -37,12 +39,13 @@ def send_ui_command_create_inventory_report(params=None) -> dict:
   needs_nlg=True, # 二次自然语言包装
   tool_result_wrap = True # 工具结果包装
 )
-def send_ui_command_create_inventory_report(params=None) -> dict:
+def send_ui_command_create_customer_report(params=None) -> dict:
   return {
       "type": "ui_command",
       "command": "createNewReport",
       "params": {
-        "id": "customer"
+        "id": "customer",
+        "name": "客户报表"
       },
   }
 
@@ -53,12 +56,13 @@ def send_ui_command_create_inventory_report(params=None) -> dict:
   needs_nlg=True, # 二次自然语言包装
   tool_result_wrap = True # 工具结果包装
 )
-def send_ui_command_create_inventory_report(params=None) -> dict:
+def send_ui_command_create_sales_and_profits_report(params=None) -> dict:
   return {
       "type": "ui_command",
       "command": "createNewReport",
       "params": {
-        "id": "multiMetrics"
+        "id": "multiMetrics",
+        "name": "销售与利润趋势"
       },
   }
 
@@ -68,11 +72,12 @@ def send_ui_command_create_inventory_report(params=None) -> dict:
   needs_nlg=True, # 二次自然语言包装
   tool_result_wrap = True # 工具结果包装
 )
-def send_ui_command_create_inventory_report(params=None) -> dict:
+def send_ui_command_create_operational_statistics_report(params=None) -> dict:
   return {
       "type": "ui_command",
       "command": "createNewReport",
       "params": {
-        "id": "summary"
+        "id": "summary",
+        "name": "运营统计"
       },
   }
