@@ -5,6 +5,7 @@ import sys
 
 METHOD_REGISTRY = {}
 METHOD_DOCS = {}  # 存参数说明
+METHOD_FLAGS = {}
 
 if getattr(sys, "frozen", False):
     # 打包模式：获取 exe 所在目录
@@ -24,11 +25,12 @@ if base_dir not in sys.path:
     sys.path.insert(0, base_dir)
 
 
-def register_method(name, param_desc=None):
+def register_method(name, param_desc=None, **flags):
     def decorator(func):
         METHOD_REGISTRY[name] = func
         if param_desc:
             METHOD_DOCS[name] = param_desc
+        METHOD_FLAGS[name] = flags
         return func
     return decorator
 

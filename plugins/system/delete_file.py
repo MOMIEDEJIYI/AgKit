@@ -1,7 +1,7 @@
 import os
 from rpc_registry import register_method
 
-@register_method("delete_file", param_desc={"file_name": "文件名"})
+@register_method("system.delete_file", param_desc={"file_name": "文件名"})
 def delete_file(params: dict) -> dict:
     file_name = params.get("file_name", "")
     try:
@@ -13,7 +13,7 @@ def delete_file(params: dict) -> dict:
     except Exception as e:
         return {"content": f"❌ 删除失败：{e}", "done": True}
 
-@register_method("delete_files", param_desc={"file_names": "文件名列表"})
+@register_method("system.delete_files", param_desc={"file_names": "文件名列表"})
 def delete_files(params: dict) -> dict:
     file_names = params.get("file_names", [])
     messages = []
