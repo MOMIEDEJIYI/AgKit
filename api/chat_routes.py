@@ -28,7 +28,7 @@ def get_chat_router(get_agent_service):
             if req.session_id:
                 service.manager.switch_session(req.session_id)
             else:
-                logging.info("没有传入 session_id，新建会话...")
+                print("新建会话...")
                 session = service.manager.create_session("你是遵守 JSON-RPC 2.0 协议的智能助手，返回符合规范的 JSON-RPC 请求。")
             
             if req.stream:

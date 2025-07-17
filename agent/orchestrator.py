@@ -13,16 +13,16 @@ class AgentOrchestrator:
     def _run_task_common(self, history, ask_func, first_response=None, check_cancel=lambda: False):
         current_history = history[:]
         response = first_response or ask_func(current_history, check_cancel=check_cancel)
-        logger.info("_run_task_common response: %s", response)
+        print("_run_task_common response: %s", response)
 
         # 针对流式接口，可能返回 dict 取消标记，先判断
         if isinstance(response, dict) and response.get("cancelled"):
-            logger.info("接收到中断标志，结束任务")
+            print("接收到中断标志，结束任务")
             return "取消操作。"
 
         for _ in range(5):
             if check_cancel():
-                logger.info("操作取消，结束任务")
+                print("操作取消，结束任务")
                 return "操作取消"
 
             try:
@@ -31,31 +31,31 @@ class AgentOrchestrator:
                 rpc_obj = parsed.get("jsonrpc") if isinstance(parsed, dict) else None
 
                 if isinstance(rpc_obj, dict) and ("result" in rpc_obj or "error" in rpc_obj):
-                    logger.info("ℹ️ 收到 JSON-RPC 响应，进入对话阶段")
+                    print("ℹ️ 收到 JSON-RPC 响应，进入对话阶段")
                     break
 
                 if isinstance(rpc_obj, dict) and "method" in rpc_obj:
                     method_name = rpc_obj.get("method")
-                    logger.info("✅ 收到 JSON-RPC 请求")
-                    logger.info("⚙️ 执行 JSON-RPC 请求: %s", rpc_obj)
+                    print("✅ 收到 JSON-RPC 请求")
+                    print("⚙️ 执行 JSON-RPC 请求: %s", rpc_obj)
                     rpc_response = handle_rpc_request(json.dumps(rpc_obj))
 
                     direct_response = METHOD_FLAGS.get(method_name, {}).get("direct_response", False)
                     if direct_response:
-                        logger.info(f"🔔 方法 {method_name} 标记为 direct_response，直接返回结果")
+                        print(f"🔔 方法 {method_name} 标记为 direct_response，直接返回结果：{rpc_response}")
                         return rpc_response.get("result") or {}
 
                     if rpc_response is None:
-                        logger.info("ℹ️ 请求是通知类型，无需响应")
+                        print("ℹ️ 请求是通知类型，无需响应")
                         break
 
                     if rpc_response.get("error") and "未知方法" in rpc_response["error"]["message"]:
-                        logger.info("❗未知方法，尝试引导模型使用合法方法")
+                        print("❗未知方法，尝试引导模型使用合法方法")
                         response = ask_func(current_history, known_methods=self.agent.available_methods, check_cancel=check_cancel)
                         continue
 
                     current_history += [
-                        {"role": "assistant", "content": response},
+                        {"role": "assistant", "content": json.dumps(response, ensure_ascii=False)},
                         {"role": "system", "content": f"RPC调用结果：{json.dumps(rpc_response, ensure_ascii=False)}"}
                     ]
                     response = ask_func(current_history, check_cancel=check_cancel)

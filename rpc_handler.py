@@ -1,6 +1,6 @@
 import json
 from utils import utils
-from rpc_registry import METHOD_REGISTRY  # 导入注册表
+from rpc_registry import METHOD_REGISTRY, METHOD_FLAGS
 
 def handle_rpc_request(raw_text: str) -> dict | None:
     try:
@@ -36,11 +36,18 @@ def handle_rpc_request(raw_text: str) -> dict | None:
             result = handler(*params)
         else:
             result = handler(params)
+        
+        # 判断是否是 direct_response 方法，跳过格式校验
+        direct_response = False
+        if method in METHOD_FLAGS:
+            direct_response = METHOD_FLAGS[method].get("direct_response", False)
 
-        if not isinstance(result, dict):
-            raise ValueError(f"工具函数返回值必须是 dict，当前类型: {type(result)}")
-        if "content" not in result or "done" not in result:
-            raise ValueError("工具函数返回的结果必须包含 'content' 和 'done' 字段")
+        if not direct_response:
+            # 非 direct_response 方法，必须是 dict 且包含特定字段
+            if not isinstance(result, dict):
+                raise ValueError(f"工具函数返回值必须是 dict，当前类型: {type(result)}")
+            if "content" not in result or "done" not in result:
+                raise ValueError("工具函数返回的结果必须包含 'content' 和 'done' 字段")
 
         if request_id is None:
             return None  # 通知不返回响应

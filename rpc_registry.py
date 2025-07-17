@@ -2,6 +2,7 @@ import os
 import json
 import importlib
 import sys
+import inspect
 
 METHOD_REGISTRY = {}
 METHOD_DOCS = {}  # 存参数说明
@@ -27,8 +28,11 @@ if base_dir not in sys.path:
 
 def register_method(name, param_desc=None, **flags):
     def decorator(func):
+        sig = inspect.signature(func)
+        if len(sig.parameters) == 0:
+            raise ValueError(f"注册的方法 {name} 必须至少接收一个参数 (params)，不使用请设置为params=None")
         METHOD_REGISTRY[name] = func
-        if param_desc:
+        if param_desc is not None:
             METHOD_DOCS[name] = param_desc
         METHOD_FLAGS[name] = flags
         return func

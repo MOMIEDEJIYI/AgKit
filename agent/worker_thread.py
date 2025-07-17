@@ -1,4 +1,5 @@
 from PyQt5.QtCore import QThread, pyqtSignal
+import json
 import logging
 
 logger = logging.getLogger(__name__)
@@ -31,7 +32,7 @@ class WorkerThread(QThread):
                     progress_callback=progress
                 )
 
-            self.finished.emit(result)
+            self.finished.emit(json.dumps(result, ensure_ascii=False))
         except Exception as e:
             self.error.emit(str(e))
 
