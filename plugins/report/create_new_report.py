@@ -12,7 +12,7 @@ def send_ui_command_create_sales_report(params=None) -> dict:
       "type": "ui_command",
       "command": "createNewReport",
       "params": {
-        "reportType": "sales"
+        "id": "sales"
       },
   }
 
@@ -27,7 +27,7 @@ def send_ui_command_create_inventory_report(params=None) -> dict:
       "type": "ui_command",
       "command": "createNewReport",
       "params": {
-        "reportType": "inventory"
+        "id": "inventory"
       },
   }
 
@@ -42,7 +42,7 @@ def send_ui_command_create_inventory_report(params=None) -> dict:
       "type": "ui_command",
       "command": "createNewReport",
       "params": {
-        "reportType": "customer"
+        "id": "customer"
       },
   }
 
@@ -58,7 +58,7 @@ def send_ui_command_create_inventory_report(params=None) -> dict:
       "type": "ui_command",
       "command": "createNewReport",
       "params": {
-        "reportType": "multiMetrics"
+        "id": "multiMetrics"
       },
   }
 
@@ -73,6 +73,6 @@ def send_ui_command_create_inventory_report(params=None) -> dict:
       "type": "ui_command",
       "command": "createNewReport",
       "params": {
-        "reportType": "summary"
+        "id": "summary"
       },
   }
