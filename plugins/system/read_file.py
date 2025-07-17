@@ -2,7 +2,12 @@ import os
 import re
 from rpc_registry import register_method
 
-@register_method("system.read_file", param_desc={"file_name": "文件名"})
+
+@register_method(
+    name="system.read_file",
+    param_desc={"file_name": "文件名"}, 
+    needs_nlg=True, # 二次自然语言包装
+)
 def read_file(params: dict) -> dict:
     file_name = params.get("file_name", "")
     try:

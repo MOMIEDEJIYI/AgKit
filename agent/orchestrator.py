@@ -37,13 +37,15 @@ class AgentOrchestrator:
 
                 if isinstance(rpc_obj, dict) and "method" in rpc_obj:
                     method_name = rpc_obj.get("method")
+                    method_flags = METHOD_FLAGS.get(method_name, {})
                     print("✅ 收到 JSON-RPC 请求")
                     print("⚙️ 执行 JSON-RPC 请求: %s", rpc_obj)
                     rpc_response = handle_rpc_request(json.dumps(rpc_obj))
 
-                    direct_response = METHOD_FLAGS.get(method_name, {}).get("direct_response", False)
-                    if direct_response:
-                        print(f"🔔 方法 {method_name} 标记为 direct_response，结果为：{rpc_response}")
+                    needs_nlg = METHOD_FLAGS.get(method_name, {}).get("needs_nlg", False)
+                    tool_result_wrap = method_flags.get("tool_result_wrap", True)
+                    if needs_nlg:
+                        print(f"🔔 方法 {method_name} 标记为 needs_nlg={needs_nlg},tool_result_wrap=${tool_result_wrap}，结果为：{rpc_response}")
                         tool_result = rpc_response.get('result', {})
                         current_history += [
                             {"role": "assistant", "content": json.dumps(response, ensure_ascii=False)},
@@ -80,7 +82,7 @@ class AgentOrchestrator:
             except Exception as e:
                 logger.error("❌ 出现异常: %s", str(e))
                 return f"❌ 出现异常：{str(e)}"
-        if tool_result is not None:
+        if tool_result_wrap and tool_result is not None:
             return {
                 "text": response,
                 "tool_result": tool_result

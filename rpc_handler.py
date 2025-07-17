@@ -37,13 +37,13 @@ def handle_rpc_request(raw_text: str) -> dict | None:
         else:
             result = handler(params)
         
-        # 判断是否是 direct_response 方法，跳过格式校验
-        direct_response = False
+        # 判断是否是 tool_result_wrap 方法，跳过格式校验
+        tool_result_wrap = False
         if method in METHOD_FLAGS:
-            direct_response = METHOD_FLAGS[method].get("direct_response", False)
+            tool_result_wrap = METHOD_FLAGS[method].get("tool_result_wrap", False)
 
-        if not direct_response:
-            # 非 direct_response 方法，必须是 dict 且包含特定字段
+        if not tool_result_wrap:
+            # 非 tool_result_wrap 方法，必须是 dict 且包含特定字段
             if not isinstance(result, dict):
                 raise ValueError(f"工具函数返回值必须是 dict，当前类型: {type(result)}")
             if "content" not in result or "done" not in result:
