@@ -130,16 +130,19 @@ class ChatWindow(QWidget):
         self.anim_geometry.start()
         self.anim_opacity.start()
 
-    # --- 下面是你的业务代码，保持不变 ---
     def agent_methods(self):
         from rpc_registry import METHOD_REGISTRY
         return sorted(METHOD_REGISTRY.keys())
 
     def on_new_session(self):
         file_name = self.service.manager.create_session("你是遵守 JSON-RPC 2.0 协议的智能助手，返回符合规范的 JSON-RPC 请求。")
-        self.session_list.addItem(file_name)
+
+        existing_items = self.session_list.findItems(file_name, Qt.MatchFlag.MatchExactly)
+        if not existing_items:
+            self.session_list.addItem(file_name)
         self.service.manager.switch_session(file_name)
         self.load_history()
+        # 选中刚创建的项
         items = self.session_list.findItems(file_name, Qt.MatchFlag.MatchExactly)
         if items:
             self.session_list.setCurrentItem(items[0])
