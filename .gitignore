@@ -1,6 +1,5 @@
 # Auto detect text files and perform LF normalization
 __pycache__/
-.env
 history/
 runtime/
 build/

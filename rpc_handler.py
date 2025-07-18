@@ -36,7 +36,6 @@ def handle_rpc_request(raw_text: str) -> dict | None:
             result = handler(*params)
         else:
             result = handler(params)
-        
         # 判断是否是 tool_result_wrap 方法，跳过格式校验
         tool_result_wrap = False
         if method in METHOD_FLAGS:
@@ -51,7 +50,7 @@ def handle_rpc_request(raw_text: str) -> dict | None:
 
         if request_id is None:
             return None  # 通知不返回响应
-
+        print("返回的 rpc结果 方法：%s，参数:%s，结果:%s", method, params, result)
         return {
             "jsonrpc": "2.0",
             "result": result,

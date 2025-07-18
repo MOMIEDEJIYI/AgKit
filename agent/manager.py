@@ -24,11 +24,13 @@ class ConversationManager:
         file_name = f"session_{timestamp}.json"
         self.current_session = {
             "file": file_name,
-            "history": [{"role": "system", "content": system_prompt}],
-            "rpc_id": 1
+            "history": [],  # 不写入 system
+            "rpc_id": 1,
+            "system_prompt": system_prompt  # 单独保存 system_prompt
         }
         self._save()
         return file_name
+
 
     def switch_session(self, file_name: str):
         path = os.path.join(self.history_dir, file_name)
@@ -39,6 +41,8 @@ class ConversationManager:
         return self.current_session["history"]
 
     def add_message(self, role, content):
+        # if role == "system":
+        #     return
         if role == "assistant":
             content = utils.extract_json_from_text(content)
         self.current_session["history"].append({"role": role, "content": content})

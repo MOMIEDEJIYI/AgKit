@@ -51,6 +51,7 @@ class AgentService:
         if progress_callback:
             progress_callback("执行任务，调用RPC请求中...")
         final_response = self.orchestrator.run_task_sync(history, first_response)
+        print("final_response:", final_response)
 
         if check_cancel():
             return "已取消"
@@ -93,6 +94,7 @@ class AgentService:
             progress_callback("执行流式任务，处理中...")
 
         final_response = self.orchestrator.run_task_stream(history, first_response, check_cancel=check_cancel)
+        print("final_response:", final_response)
 
         if check_cancel():
             return "已取消"

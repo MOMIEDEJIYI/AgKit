@@ -1,20 +1,27 @@
 # agent/agent.py
 
 from openai import OpenAI
-from config import API_KEY
+from config import API_KEY, BASE_URL, MODEL, PROVIDER
 from rpc_registry import METHOD_REGISTRY, METHOD_DOCS
 import logging
+from agent.model.gemini_client import GeminiClient
 
 logger = logging.getLogger(__name__)
 class Agent:
     def __init__(
         self,
         api_key: str = API_KEY,
-        base_url: str = "https://api.deepseek.com/v1",
-        model: str = "deepseek-chat",
+        base_url: str = BASE_URL,
+        model: str = MODEL,
     ):
-        self.client = OpenAI(api_key=api_key, base_url=base_url)
+        self.provider = PROVIDER
         self.model = model
+        if self.provider == "deepseek" or self.provider == "openai":
+            self.client = OpenAI(api_key=api_key, base_url=base_url)
+        elif self.provider == "gemini":
+            self.client = GeminiClient(api_key=api_key, model=model, endpoint=base_url)
+        else:
+            raise ValueError(f"不支持的 PROVIDER: {self.provider}")
         self.system_prompt = """
 你是一个严格遵守 JSON-RPC 2.0 协议的智能助手。
 
@@ -86,13 +93,105 @@ class Agent:
     def available_methods(self, methods):
         self._available_methods = methods
     def ask(self, history_messages: list[dict], known_methods=None, extra_prompt=None) -> str:
-        logger.info(f"agent ask")
-        system_prompt = self.system_prompt
-        if known_methods:
-            system_prompt += "\n\n请仅使用以下方法名之一调用 JSON-RPC 接口："
-            system_prompt += ", ".join(known_methods)
+      logger.info(f"agent ask")
+      print("请求 URL:", BASE_URL)
 
-            # 附加参数说明，给模型更清晰指引
+      # 拼接完整 system prompt
+      system_prompt = self._build_system_prompt(known_methods, extra_prompt)
+
+      # 构造 provider 兼容的 messages
+      messages = self._build_messages(history_messages, system_prompt)
+
+      if self.provider in ["deepseek", "openai"]:
+          response = self.client.chat.completions.create(
+              model=self.model,
+              messages=messages,
+              temperature=0.2,
+          )
+          return response.choices[0].message.content.strip()
+
+      elif self.provider == "gemini":
+          return self.client.chat(messages)
+
+      else:
+          raise ValueError(f"未知的 provider: {self.provider}")
+
+    def ask_stream(self, history_messages: list[dict], known_methods=None, extra_prompt=None, check_cancel=lambda: False) -> str:
+      logger.info(f"agent ask_stream")
+      print("请求 URL:", BASE_URL)
+
+      system_prompt = self._build_system_prompt(known_methods, extra_prompt)
+      messages = self._build_messages(history_messages, system_prompt)
+      print("messages", messages)
+      if self.provider == "gemini":
+          try:
+              repsonse = self.client.chat(messages)
+              print(f"Gemini 成功响应：{repsonse}")
+              return repsonse
+          except Exception as e:
+              return f"Gemini 请求失败：{e}"
+
+      elif self.provider in ["deepseek", "openai"]:
+          collected_text = ""
+          try:
+              stream = self.client.chat.completions.create(
+                  model=self.model,
+                  messages=messages,
+                  temperature=0.2,
+                  stream=True
+              )
+
+              print(f"openai类型 成功响应stream：{stream}")
+              for chunk in stream:
+                  if check_cancel():
+                      logger.info("中断请求：用户取消")
+                      return "已取消当前任务"
+
+                  delta = chunk.choices[0].delta
+                  if hasattr(delta, "content") and delta.content:
+                      collected_text += delta.content
+
+              print(f"openai类型 成功响应collected_text：{collected_text}")
+              return collected_text.strip()
+
+          except Exception as e:
+              return f"请求失败：{str(e)}"
+
+      else:
+          return f"不支持的 provider: {self.provider}"
+
+
+    def _build_messages(self, history_messages: list[dict], system_prompt: str) -> list[dict]:
+        """
+        根据 provider 构造不同格式的消息。
+        """
+        if self.provider in ["deepseek", "openai"]:
+            return [{"role": "system", "content": system_prompt}] + history_messages
+
+        elif self.provider == "gemini":
+          # 过滤掉 system 消息，并深拷贝避免改动原数据
+          gemini_messages = [dict(m) for m in history_messages if m.get("role") != "system"]
+
+          if gemini_messages and gemini_messages[0]["role"] == "user":
+              # 不修改原消息，复制第一条消息内容，拼接系统提示
+              new_first_user = {
+                  "role": "user",
+                  "content": system_prompt + "\n\n" + gemini_messages[0]["content"]
+              }
+              gemini_messages[0] = new_first_user
+          else:
+              gemini_messages.insert(0, {"role": "user", "content": system_prompt})
+
+          return gemini_messages
+
+        else:
+            raise ValueError(f"未知的 provider: {self.provider}")
+    def _build_system_prompt(self, known_methods=None, extra_prompt=None) -> str:
+        prompt = self.system_prompt
+        if known_methods:
+            prompt += "\n\n请仅使用以下方法名之一调用 JSON-RPC 接口："
+            prompt += ", ".join(known_methods)
+
             params_info = []
             for method in known_methods:
                 if method in self.method_docs:
@@ -102,63 +201,9 @@ class Agent:
                 else:
                     params_info.append(method)
             if params_info:
-                system_prompt += "\n\n方法和参数说明如下：\n" + "\n".join(params_info)
+                prompt += "\n\n方法和参数说明如下：\n" + "\n".join(params_info)
 
         if extra_prompt:
-            system_prompt += "\n\n" + extra_prompt
+            prompt += "\n\n" + extra_prompt
 
-        messages = [{"role": "system", "content": system_prompt}] + history_messages
-
-        response = self.client.chat.completions.create(
-            model=self.model,
-            messages=messages,
-            temperature=0.2,
-        )
-        return response.choices[0].message.content.strip()
-    
-    def ask_stream(self, history_messages: list[dict], known_methods=None, extra_prompt=None, check_cancel=lambda: False) -> str:
-      logger.info(f"agent ask_stream")
-      system_prompt = self.system_prompt
-      if known_methods:
-          system_prompt += "\n\n请仅使用以下方法名之一调用 JSON-RPC 接口："
-          system_prompt += ", ".join(known_methods)
-
-          # 附加参数说明
-          params_info = []
-          for method in known_methods:
-              if method in self.method_docs:
-                  params_desc = self.method_docs[method]
-                  params_str = ", ".join(f"{k}: {v}" for k, v in params_desc.items())
-                  params_info.append(f"{method}({params_str})")
-              else:
-                  params_info.append(method)
-          if params_info:
-              system_prompt += "\n\n方法和参数说明如下：\n" + "\n".join(params_info)
-
-      if extra_prompt:
-          system_prompt += "\n\n" + extra_prompt
-
-      messages = [{"role": "system", "content": system_prompt}] + history_messages
-
-      collected_text = ""
-      try:
-          stream = self.client.chat.completions.create(
-              model=self.model,
-              messages=messages,
-              temperature=0.2,
-              stream=True  # 开启流式
-          )
-
-          for chunk in stream:
-              if check_cancel():
-                  logger.info("中断请求：用户取消")
-                  return "已取消当前任务"
-
-              delta = chunk.choices[0].delta
-              if hasattr(delta, "content") and delta.content:
-                  collected_text += delta.content
-
-          return collected_text.strip()
-
-      except Exception as e:
-          return f"❌ 请求失败：{str(e)}"
+        return prompt

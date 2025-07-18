@@ -111,9 +111,7 @@ class ChatWindow(QWidget):
 
     def add_chat_bubble(self, text, is_user):
         bubble = ChatBubble(text, is_user)
-        # 插入到倒数第二个位置，保持底部弹簧在最底部
         self.chat_layout.insertWidget(self.chat_layout.count() - 1, bubble)
-        # 滚动到底部
         self.chat_area.verticalScrollBar().setValue(self.chat_area.verticalScrollBar().maximum())
 
     def show_with_animation(self):
@@ -150,10 +148,6 @@ class ChatWindow(QWidget):
         # 同时启动动画
         self.anim_geometry.start()
         self.anim_opacity.start()
-
-    def agent_methods(self):
-        from rpc_registry import METHOD_REGISTRY
-        return sorted(METHOD_REGISTRY.keys())
 
     def on_new_session(self):
         file_name = self.service.manager.create_session("你是遵守 JSON-RPC 2.0 协议的智能助手，返回符合规范的 JSON-RPC 请求。")
@@ -200,7 +194,6 @@ class ChatWindow(QWidget):
 
         self.add_chat_bubble(user_text, is_user=True)  # 显示用户消息气泡
 
-        # 这里正常发送消息，禁用按钮，启动线程等...
         self.send_button.setEnabled(False)
         self.input_edit.setEnabled(False)
         self.cancel_button.setEnabled(True)
