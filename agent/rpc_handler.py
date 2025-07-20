@@ -2,6 +2,7 @@ import json
 from utils import utils
 from rpc_registry import METHOD_REGISTRY, METHOD_FLAGS
 from agent.models.rpc_base import RpcResponse
+from common.error_codes import DEFAULT_ERROR_CODE, DEFAULT_ERROR_MESSAGE
 
 def handle_rpc_request(raw_text: str) -> dict | None:
     try:
@@ -12,7 +13,7 @@ def handle_rpc_request(raw_text: str) -> dict | None:
         request = parsed["jsonrpc"] if "jsonrpc" in parsed and isinstance(parsed["jsonrpc"], dict) else parsed
 
         if "method" not in request:
-            return None  # 说明不是个请求（可能是响应）
+            return None  # 说明不是请求（可能是响应）
 
         if request.get("jsonrpc") != "2.0":
             raise ValueError("无效的 JSON-RPC 请求")
@@ -45,7 +46,19 @@ def handle_rpc_request(raw_text: str) -> dict | None:
             if "content" not in result or "done" not in result:
                 raise ValueError("工具函数返回的结果必须包含 'content' 和 'done' 字段")
 
-        # 如果是通知类（无 id），则不返回响应
+            # 没有 success 字段默认视为成功
+            success = result.get("success", True)
+            if not success:
+                code = result.get("code")
+                message = result.get("content", "操作失败")
+
+                # 如果插件没有返回code，兜底用默认错误码
+                if code is None:
+                    code = DEFAULT_ERROR_CODE
+                    message += "（错误码未知）"
+
+                return RpcResponse(error={"code": code, "message": message}, id=request_id).to_dict()
+
         if request_id is None:
             return None
 

@@ -1,5 +1,6 @@
 import os
 from rpc_registry import register_method
+from agent.models.rpc_base import RpcResultBase
 
 @register_method(
   name="report.export_json",
@@ -9,7 +10,7 @@ from rpc_registry import register_method
 )
 def send_ui_command_export(params=None) -> dict:
   print("send_ui_command_export 被调用，参数:", params)
-  return {
+  return RpcResultBase({
       "type": "ui_command",
       "command": "exportJsonFile",
-  }
+  }).to_dict()

@@ -137,7 +137,7 @@ class AgentOrchestrator:
                     # response = ask_func(current_history, check_cancel=check_cancel)
                     print("不需要 NLG，直接响应")
                     response = json.dumps({
-                        "explanation": rpc_response.get("result", {}).get("content", "操作已完成"),
+                        "explanation": "",
                         "jsonrpc": rpc_response
                     }, ensure_ascii=False)
                     
