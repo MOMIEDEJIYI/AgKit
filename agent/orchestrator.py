@@ -1,5 +1,5 @@
 import json
-from rpc_handler import handle_rpc_request
+from agent.rpc_handler import handle_rpc_request
 from rpc_registry import METHOD_FLAGS
 from utils import utils
 import logging
@@ -11,36 +11,51 @@ class AgentOrchestrator:
     def __init__(self, agent):
         self.agent = agent
 
+    # def _format_tool_response_for_history(self, response, rpc_response):
+    #     """
+    #     格式化助手回复和工具调用结果，用于追加到历史。
+    #     兼容 Gemini 和 OpenAI，避免传原始 JSON，方便模型理解。
+    #     """
+    #     response = utils.process_assistant_content(response)
+    #     # assistant 内容优先用 explanation，没有则用完整 response 的简化文本
+    #     if isinstance(response, dict):
+    #         assistant_content = response.get("explanation")
+    #         if not assistant_content:
+    #             # 尽量转换成字符串，避免直接json dump
+    #             assistant_content = json.dumps(response, ensure_ascii=False)
+    #     else:
+    #         assistant_content = str(response)
+
+    #     # 解析 rpc_response 的结果文本
+    #     rpc_result_text = ""
+    #     if rpc_response:
+    #         if "result" in rpc_response:
+    #             result = rpc_response["result"]
+    #             if isinstance(result, dict) and "content" in result:
+    #                 rpc_result_text = result["content"]
+    #             else:
+    #                 rpc_result_text = json.dumps(result, ensure_ascii=False)
+    #         elif "error" in rpc_response:
+    #             rpc_result_text = f"工具执行出错：{rpc_response['error']['message']}"
+
+    #     system_content = f"工具调用已完成，结果为：{rpc_result_text}"
+    #     return {"assistant": assistant_content, "system": system_content}
     def _format_tool_response_for_history(self, response, rpc_response):
-        """
-        格式化助手回复和工具调用结果，用于追加到历史。
-        兼容 Gemini 和 OpenAI，避免传原始 JSON，方便模型理解。
-        """
-        response = utils.process_assistant_content(response)
-        # assistant 内容优先用 explanation，没有则用完整 response 的简化文本
+        response = utils.extract_json_from_text(response)
         if isinstance(response, dict):
-            assistant_content = response.get("explanation")
-            if not assistant_content:
-                # 尽量转换成字符串，避免直接json dump
-                assistant_content = json.dumps(response, ensure_ascii=False)
+            assistant_content = json.dumps(response, ensure_ascii=False)
         else:
             assistant_content = str(response)
 
-        # 解析 rpc_response 的结果文本
-        rpc_result_text = ""
         if rpc_response:
-            if "result" in rpc_response:
-                result = rpc_response["result"]
-                if isinstance(result, dict) and "content" in result:
-                    rpc_result_text = result["content"]
-                else:
-                    rpc_result_text = json.dumps(result, ensure_ascii=False)
-            elif "error" in rpc_response:
-                rpc_result_text = f"工具执行出错：{rpc_response['error']['message']}"
+            # 直接序列化整个 rpc_response 作为 system 内容，确保模型看到完整结构
+            system_content = (
+                f"{json.dumps(rpc_response, ensure_ascii=False)}"
+            )
+        else:
+            system_content = "工具调用已完成，结果为空"
 
-        system_content = f"工具调用已完成，结果为：{rpc_result_text}"
         return {"assistant": assistant_content, "system": system_content}
-
 
     def _run_task_common(self, history, ask_func, first_response=None, check_cancel=lambda: False):
         current_history = history[:]
@@ -72,15 +87,24 @@ class AgentOrchestrator:
                     method_flags = METHOD_FLAGS.get(method_name, {})
                     print("收到 JSON-RPC 请求： %s", json.dumps(rpc_obj, ensure_ascii=False))
                     rpc_response = handle_rpc_request(json.dumps(rpc_obj))
-
+                    if rpc_response is None:
+                        break
                     needs_nlg = method_flags.get("needs_nlg", False)
                     tool_result_wrap = method_flags.get("tool_result_wrap", False)
-                    print(f"方法 {method_name} 标记为 needs_nlg={needs_nlg},tool_result_wrap={tool_result_wrap}，结果为：{rpc_response}")
-
+                    if rpc_response.get("error") and "未知方法" in rpc_response["error"]["message"]:
+                        print("未知方法，尝试引导模型使用合法方法")
+                        response = ask_func(current_history, known_methods=self.agent.available_methods, check_cancel=check_cancel)
+                        continue
+                    print(f"""
+                          方法 {method_name} 标记:
+                          needs_nlg={needs_nlg}
+                          tool_result_wrap={tool_result_wrap}
+                          结果：{rpc_response}
+                    """)
                     if needs_nlg:
                         tool_result = rpc_response.get('result', {})
                         formatted = self._format_tool_response_for_history(response, rpc_response)
-                        if self.provider == "gemini":
+                        if PROVIDER == "gemini":
                             current_history += [
                                 {"role": "assistant", "content": formatted["assistant"]},
                                 {"role": "assistant", "content": formatted["system"]}
@@ -88,20 +112,15 @@ class AgentOrchestrator:
                         else:
                             current_history += [
                                 {"role": "assistant", "content": formatted["assistant"]},
-                                {"role": "system", "content": formatted["system"]}
+                                {"role": "assistant", "content": formatted["system"]}
                             ]
-
+                        print("工具调用成功，当前对话记录:", current_history)
                         response = ask_func(current_history, check_cancel=check_cancel)
                         break
 
                     if rpc_response is None:
                         print("请求是通知类型，无需响应")
                         break
-
-                    if rpc_response.get("error") and "未知方法" in rpc_response["error"]["message"]:
-                        print("未知方法，尝试引导模型使用合法方法")
-                        response = ask_func(current_history, known_methods=self.agent.available_methods, check_cancel=check_cancel)
-                        continue
 
                     formatted = self._format_tool_response_for_history(response, rpc_response)
                     if PROVIDER == "gemini":
@@ -112,10 +131,16 @@ class AgentOrchestrator:
                     else:
                         current_history += [
                             {"role": "assistant", "content": formatted["assistant"]},
-                            {"role": "system", "content": formatted["system"]}
+                            {"role": "assistant", "content": formatted["system"]}
                         ]
 
-                    response = ask_func(current_history, check_cancel=check_cancel)
+                    # response = ask_func(current_history, check_cancel=check_cancel)
+                    print("不需要 NLG，直接响应")
+                    response = json.dumps({
+                        "explanation": rpc_response.get("result", {}).get("content", "操作已完成"),
+                        "jsonrpc": rpc_response
+                    }, ensure_ascii=False)
+                    
 
                     # 如果没有done字段，避免循环
                     if rpc_response.get("result") is None or rpc_response.get("result").get("done") is True:

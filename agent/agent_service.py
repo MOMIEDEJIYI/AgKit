@@ -86,7 +86,7 @@ class AgentService:
 
         history = self.manager.get_history()
         first_response = self.agent.ask_stream(history, check_cancel=check_cancel)
-
+        print("first_response:", first_response)
         if check_cancel():
             return "已取消"
 

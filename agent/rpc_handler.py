@@ -1,18 +1,18 @@
 import json
 from utils import utils
 from rpc_registry import METHOD_REGISTRY, METHOD_FLAGS
+from agent.models.rpc_base import RpcResponse
 
 def handle_rpc_request(raw_text: str) -> dict | None:
     try:
         json_str = utils.extract_json_from_text(raw_text)
         parsed = json.loads(json_str)
 
-        # 检查是否是 JSON-RPC 请求
+        # 解析 JSON-RPC 请求体
         request = parsed["jsonrpc"] if "jsonrpc" in parsed and isinstance(parsed["jsonrpc"], dict) else parsed
 
-        # 判断是请求还是响应
         if "method" not in request:
-            return None
+            return None  # 说明不是个请求（可能是响应）
 
         if request.get("jsonrpc") != "2.0":
             raise ValueError("无效的 JSON-RPC 请求")
@@ -23,43 +23,36 @@ def handle_rpc_request(raw_text: str) -> dict | None:
 
         handler = METHOD_REGISTRY.get(method)
         if not handler:
-            return {
-                "jsonrpc": "2.0",
-                "error": {"code": -32601, "message": f"未知方法: {method}"},
-                "id": request_id
-            }
+            return RpcResponse(
+                error={"code": -32601, "message": f"未知方法: {method}"},
+                id=request_id
+            ).to_dict()
 
-        # 调用方法
+        # 方法调用
         if isinstance(params, dict):
             result = handler(params)
         elif isinstance(params, list):
             result = handler(*params)
         else:
             result = handler(params)
-        # 判断是否是 tool_result_wrap 方法，跳过格式校验
-        tool_result_wrap = False
-        if method in METHOD_FLAGS:
-            tool_result_wrap = METHOD_FLAGS[method].get("tool_result_wrap", False)
+
+        # 判断 tool_result_wrap，控制字段检查
+        tool_result_wrap = METHOD_FLAGS.get(method, {}).get("tool_result_wrap", False)
 
         if not tool_result_wrap:
-            # 非 tool_result_wrap 方法，必须是 dict 且包含特定字段
             if not isinstance(result, dict):
                 raise ValueError(f"工具函数返回值必须是 dict，当前类型: {type(result)}")
             if "content" not in result or "done" not in result:
                 raise ValueError("工具函数返回的结果必须包含 'content' 和 'done' 字段")
 
+        # 如果是通知类（无 id），则不返回响应
         if request_id is None:
-            return None  # 通知不返回响应
-        print("返回的 rpc结果 方法：%s，参数:%s，结果:%s", method, params, result)
-        return {
-            "jsonrpc": "2.0",
-            "result": result,
-            "id": request_id
-        }
+            return None
+
+        return RpcResponse(result=result, id=request_id).to_dict()
 
     except Exception as e:
-        return {
-            "jsonrpc": "2.0",
-            "error": {"code": -32000, "message": str(e)},
-            "id": request.get("id", None) if 'request' in locals() else None
-        }
+        return RpcResponse(
+            error={"code": -32000, "message": str(e)},
+            id=request.get("id", None) if 'request' in locals() else None
+        ).to_dict()

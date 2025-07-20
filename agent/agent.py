@@ -4,7 +4,7 @@ from openai import OpenAI
 from config import API_KEY, BASE_URL, MODEL, PROVIDER
 from rpc_registry import METHOD_REGISTRY, METHOD_DOCS
 import logging
-from agent.model.gemini_client import GeminiClient
+from agent.models.gemini_client import GeminiClient
 
 logger = logging.getLogger(__name__)
 class Agent:
@@ -140,8 +140,6 @@ class Agent:
                   temperature=0.2,
                   stream=True
               )
-
-              print(f"openai类型 成功响应stream：{stream}")
               for chunk in stream:
                   if check_cancel():
                       logger.info("中断请求：用户取消")
