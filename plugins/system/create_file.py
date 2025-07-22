@@ -1,7 +1,7 @@
 import os
 from rpc_registry import register_method
 from agent.models.rpc_base import RpcResultBase
-from error_codes import ErrorCode
+from plugins.system.error_codes import ErrorCode
 
 @register_method("system.create_file", param_desc={"file_name": "文件名", "content": "文件内容", "extension": "文件扩展名"})
 def create_file(params: dict) -> dict:
@@ -10,7 +10,7 @@ def create_file(params: dict) -> dict:
     extension = params.get("extension", "txt")
 
     if not file_name:
-        return RpcResultBase("❌ 缺少文件名", success=False, code=ErrorCode.MISSING_PARAM["code"]).to_dict()
+        return RpcResultBase("❌ 缺少文件名", success=False, code=ErrorCode.FILE_READ_ERROR["code"]).to_dict()
 
     # 拼接文件名带扩展
     if not file_name.endswith(f".{extension}"):

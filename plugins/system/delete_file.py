@@ -2,6 +2,7 @@ import os
 import re
 from rpc_registry import register_method
 from agent.models.rpc_base import RpcResultBase
+from plugins.system.error_codes import ErrorCode
 
 @register_method(
     name="system.read_file",
@@ -16,7 +17,7 @@ def read_file(params: dict) -> dict:
         with open(full_file_name, "r", encoding="utf-8") as f:
             return RpcResultBase(f.read()).to_dict()
     except Exception as e:
-        return RpcResultBase(f"❌ 读取失败：{e}", success=False, code=-32001).to_dict()
+        return RpcResultBase(f"❌ 读取失败：{e}", success=False, code=ErrorCode.FILE_READ_ERROR["code"]).to_dict()
 
 @register_method("system.read_files", param_desc={"file_names": "文件名列表"})
 def read_files(params: dict) -> dict:
@@ -37,7 +38,7 @@ def read_folder(params: dict) -> dict:
     folder_path = params.get("folder_path", "")
     result = {}
     if not os.path.isdir(folder_path):
-        return RpcResultBase(f"❌ 路径不存在或不是文件夹：{folder_path}", success=False, code=-32002).to_dict()
+        return RpcResultBase(f"❌ 路径不存在或不是文件夹：{folder_path}", success=False, code=ErrorCode.FILE_READ_ERROR["code"]).to_dict()
     
     success = True
     for file_name in os.listdir(folder_path):
@@ -72,7 +73,7 @@ def read_related_files(params: dict) -> dict:
         related = find_imported_files({"file_content": content})
         return read_files({"file_names": related.get("content", [])})
     except Exception as e:
-        return RpcResultBase({base_file: f"❌ 分析失败：{e}"}, success=False, code=-32003).to_dict()
+        return RpcResultBase({base_file: f"❌ 分析失败：{e}"}, success=False, code=ErrorCode.FILE_DEPENDENCY_ANALYS_IS_ERROR["code"]).to_dict()
 
 @register_method("system.list_files", param_desc={"directory": "文件夹路径"})
 def list_files(params: dict) -> dict:
@@ -81,4 +82,4 @@ def list_files(params: dict) -> dict:
         files = [f for f in os.listdir(directory) if os.path.isfile(os.path.join(directory, f))]
         return RpcResultBase(files).to_dict()
     except Exception as e:
-        return RpcResultBase([f"❌ 读取失败：{e}"], success=False, code=-32001).to_dict()
+        return RpcResultBase([f"❌ 读取失败：{e}"], success=False, code=ErrorCode.FILE_READ_ERROR["code"]).to_dict()
