@@ -27,4 +27,4 @@ def delete_dirs_and_files(root_path: str, targets: list[str]):
 if __name__ == "__main__":
     current_dir = os.path.dirname(os.path.abspath(__file__))
     # 你可以添加更多需要删除的目标
-    delete_dirs_and_files(current_dir, ["__pycache__", "runtime"])
+    delete_dirs_and_files(current_dir, ["__pycache__", "runtime", "build"])
