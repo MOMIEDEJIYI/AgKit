@@ -280,7 +280,3 @@ class ChatWindow(QWidget):
                 self.session_list.setCurrentItem(items[0])
             else:
                 print("警告：新建的会话列表项没有找到")
-
-
-
-

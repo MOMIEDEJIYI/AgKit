@@ -4,6 +4,7 @@ from rpc_registry import METHOD_FLAGS
 from utils import utils
 import logging
 from config import PROVIDER
+from common.error_codes import ErrorCode
 
 logger = logging.getLogger(__name__)
 
@@ -95,6 +96,14 @@ class AgentOrchestrator:
                         print("未知方法，尝试引导模型使用合法方法")
                         response = ask_func(current_history, known_methods=self.agent.available_methods, check_cancel=check_cancel)
                         continue
+                    # 参数缺失错误（让大模型补全参数）
+                    if rpc_response.get("error") and rpc_response["error"].get("code") == ErrorCode.MISSING_PARAM["code"]:
+                        missing_msg = rpc_response["error"]["message"]
+                        print(f"参数缺失，重新向模型请求补充：{missing_msg}")
+                        current_history += [{"role": "assistant", "content": missing_msg}]
+                        response = ask_func(current_history, check_cancel=check_cancel)
+                        continue
+
                     print(f"""
                           方法 {method_name} 标记:
                           needs_nlg={needs_nlg}

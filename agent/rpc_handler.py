@@ -2,7 +2,7 @@ import json
 from utils import utils
 from rpc_registry import METHOD_REGISTRY, METHOD_FLAGS
 from agent.models.rpc_base import RpcResponse
-from common.error_codes import DEFAULT_ERROR_CODE, DEFAULT_ERROR_MESSAGE
+from common.error_codes import ErrorCode
 
 def handle_rpc_request(raw_text: str) -> dict | None:
     try:
@@ -10,26 +10,47 @@ def handle_rpc_request(raw_text: str) -> dict | None:
         parsed = json.loads(json_str)
 
         # 解析 JSON-RPC 请求体
-        request = parsed["jsonrpc"] if "jsonrpc" in parsed and isinstance(parsed["jsonrpc"], dict) else parsed
+        request = parsed["jsonrpc"] if isinstance(parsed.get("jsonrpc"), dict) else parsed
 
         if "method" not in request:
-            return None  # 说明不是请求（可能是响应）
+            return None  # 非请求（可能是响应）
 
         if request.get("jsonrpc") != "2.0":
             raise ValueError("无效的 JSON-RPC 请求")
 
         method = request["method"]
         params = request.get("params", {})
-        request_id = request.get("id", None)
+        request_id = request.get("id")
 
         handler = METHOD_REGISTRY.get(method)
         if not handler:
             return RpcResponse(
-                error={"code": -32601, "message": f"未知方法: {method}"},
+                error={
+                    "code": ErrorCode.UNKNOWN_METHOD["code"],
+                    "message": f"{ErrorCode.UNKNOWN_METHOD['message']}: {method}"
+                },
                 id=request_id
             ).to_dict()
 
-        # 方法调用
+        # ==== 参数校验 ====
+        param_desc = getattr(handler, "_rpc_param_desc", {})
+        missing_params = [
+            key for key in param_desc
+            if key not in params or params[key] in [None, "", []]
+        ]
+
+        if missing_params:
+            return RpcResponse(
+                error={
+                    "code": ErrorCode.MISSING_PARAM["code"],
+                    "message": f"{ErrorCode.MISSING_PARAM['message']}: {', '.join(missing_params)}。请根据 param_desc 向用户提问。",
+                    "missing_params": missing_params,
+                    "param_desc": {k: param_desc[k] for k in missing_params}
+                },
+                id=request_id
+            ).to_dict()
+
+        # ==== 执行方法 ====
         if isinstance(params, dict):
             result = handler(params)
         elif isinstance(params, list):
@@ -37,7 +58,7 @@ def handle_rpc_request(raw_text: str) -> dict | None:
         else:
             result = handler(params)
 
-        # 判断 tool_result_wrap，控制字段检查
+        # ==== 返回结构检查 ====
         tool_result_wrap = METHOD_FLAGS.get(method, {}).get("tool_result_wrap", False)
 
         if not tool_result_wrap:
@@ -46,26 +67,26 @@ def handle_rpc_request(raw_text: str) -> dict | None:
             if "content" not in result or "done" not in result:
                 raise ValueError("工具函数返回的结果必须包含 'content' 和 'done' 字段")
 
-            # 没有 success 字段默认视为成功
-            success = result.get("success", True)
-            if not success:
-                code = result.get("code")
-                message = result.get("content", "操作失败")
-
-                # 如果插件没有返回code，兜底用默认错误码
-                if code is None:
-                    code = DEFAULT_ERROR_CODE
-                    message += "（错误码未知）"
-
-                return RpcResponse(error={"code": code, "message": message}, id=request_id).to_dict()
+            # 工具返回失败
+            if not result.get("success", True):
+                return RpcResponse(
+                    error={
+                        "code": result.get("code", ErrorCode.UNKNOWN_ERROR["code"]),
+                        "message": result.get("content", ErrorCode.UNKNOWN_ERROR["message"])
+                    },
+                    id=request_id
+                ).to_dict()
 
         if request_id is None:
-            return None
+            return None  # Notification 请求无响应
 
         return RpcResponse(result=result, id=request_id).to_dict()
 
     except Exception as e:
         return RpcResponse(
-            error={"code": -32000, "message": str(e)},
+            error={
+                "code": ErrorCode.UNKNOWN_ERROR["code"],
+                "message": str(e)
+            },
             id=request.get("id", None) if 'request' in locals() else None
         ).to_dict()
