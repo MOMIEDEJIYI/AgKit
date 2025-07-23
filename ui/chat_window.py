@@ -224,12 +224,67 @@ class ChatWindow(QWidget):
         self.thinking_label.setText(msg)
 
     def on_agent_response(self):
-        self.load_history()
         self.send_button.setEnabled(True)
         self.input_edit.setEnabled(True)
         self.input_edit.clear()
         self.cancel_button.setEnabled(False)
 
+        last_msg = self.service.manager.get_history()[-1]["content"]
+
+        # 尝试解析为 JSON-RPC 响应
+        try:
+            parsed = json.loads(last_msg)
+            if isinstance(parsed, dict) and parsed.get("jsonrpc") == "2.0":
+                method = parsed.get("method")
+                if method == "system.confirm_action":
+                    question = parsed["params"]["question"]
+                    options = parsed["params"]["options"]
+                    rpc_id = parsed.get("id")
+                    self.show_confirm_dialog(question, options, rpc_id)
+                    return
+        except Exception as e:
+            pass  # 非 JSON，忽略即可
+
+        self.load_history()  # 普通响应就刷新历史
+
+    def show_confirm_dialog(self, question, options, rpc_id):
+        dialog = QDialog(self)
+        dialog.setWindowTitle("请确认")
+
+        layout = QVBoxLayout()
+        label = QLabel(question)
+        layout.addWidget(label)
+
+        button_layout = QHBoxLayout()
+        for option in options:
+            btn = QPushButton(option)
+            btn.clicked.connect(lambda _, opt=option: self.handle_confirmation(dialog, opt, rpc_id))
+            button_layout.addWidget(btn)
+
+        layout.addLayout(button_layout)
+        dialog.setLayout(layout)
+        dialog.exec()
+
+    def handle_confirmation(self, dialog, option, rpc_id):
+        dialog.accept()
+        # 构造 JSON-RPC 响应格式
+        response = {
+            "explanation": f"用户选择了 {option}",
+            "jsonrpc": {
+                "jsonrpc": "2.0",
+                "result": {
+                    "content": option,
+                    "done": True
+                },
+                "id": rpc_id
+            }
+        }
+
+        # 将其添加到对话记录中作为用户消息
+        self.service.manager.add_message("user", json.dumps(response, ensure_ascii=False, indent=2))
+
+        # 再次调用 agent 处理这个响应
+        self.on_send()
 
     def on_agent_error(self, error_msg):
         self.service.manager.add_message("assistant", error_msg)
