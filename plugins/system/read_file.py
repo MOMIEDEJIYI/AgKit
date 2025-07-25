@@ -6,6 +6,7 @@ from agent.models.rpc_base import RpcResultBase
 @register_method(
     name="system.read_file",
     param_desc={"file_name": "文件名", "extension": "文件扩展名"},
+    description="读取文件",
     needs_nlg=True,
 )
 def read_file(params: dict) -> dict:
@@ -18,7 +19,11 @@ def read_file(params: dict) -> dict:
     except Exception as e:
         return RpcResultBase(f"❌ 读取失败：{e}", success=False, code=1001).to_dict()
 
-@register_method("system.read_files", param_desc={"file_names": "文件名列表"})
+@register_method(
+    name="system.read_files",
+    param_desc={"file_names": "文件名列表"},
+    description="读取多个文件",
+)
 def read_files(params: dict) -> dict:
     file_names = params.get("file_names", [])
     result = {}
@@ -32,7 +37,11 @@ def read_files(params: dict) -> dict:
             success = False
     return RpcResultBase(result, success=success).to_dict()
 
-@register_method("system.read_folder", param_desc={"folder_path": "文件夹路径"})
+@register_method(
+    name="system.read_folder",
+    param_desc={"folder_path": "文件夹路径"},
+    description="读取文件夹",
+)
 def read_folder(params: dict) -> dict:
     folder_path = params.get("folder_path", "")
     result = {}
@@ -51,30 +60,11 @@ def read_folder(params: dict) -> dict:
                 success = False
     return RpcResultBase(result, success=success).to_dict()
 
-@register_method("system.find_imported_files", param_desc={"file_content": "文件内容"})
-def find_imported_files(params: dict) -> dict:
-    file_content = params.get("file_content", "")
-    pattern = r"from\s+(\S+)\s+import|import\s+(\S+)"
-    matches = re.findall(pattern, file_content)
-    modules = set()
-    for m in matches:
-        module = m[0] or m[1]
-        if "." not in module:
-            modules.add(module.strip())
-    return RpcResultBase([f"{m}.py" for m in modules]).to_dict()
-
-@register_method("system.read_related_files", param_desc={"base_file": "基础文件"})
-def read_related_files(params: dict) -> dict:
-    base_file = params.get("base_file", "")
-    try:
-        with open(base_file, "r", encoding="utf-8") as f:
-            content = f.read()
-        related = find_imported_files({"file_content": content})
-        return read_files({"file_names": related.get("content", [])})
-    except Exception as e:
-        return RpcResultBase({base_file: f"❌ 分析失败：{e}"}, success=False, code=1003).to_dict()
-
-@register_method("system.list_files", param_desc={"directory": "文件夹路径"})
+@register_method(
+    name="system.list_files",
+    param_desc={"directory": "文件夹路径"},
+    description="列出文件夹下的文件",
+)
 def list_files(params: dict) -> dict:
     directory = params.get("directory", "")
     try:

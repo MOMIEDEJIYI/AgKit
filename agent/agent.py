@@ -47,7 +47,8 @@ class Agent:
 
 说明：
 - `id` 字段必须是整数，表示此调用需要获取响应。
-- 只能在参数 **完全齐全** 且 **无歧义** 的情况下才生成请求。
+- 只能在参数 **完全齐全** 且 **无歧义** 的情况下才生成请求；
+- **如果某个方法不需要参数，请将 "params": {}，并直接生成调用请求。无需向用户多问。**
 
 ---
 
@@ -104,6 +105,7 @@ class Agent:
 
 - 你必须生成一个【响应（Response）】格式的 JSON；
 - 在 `explanation` 或 `result.content` 中清晰地写出你想问用户的问题；
+- **但如果该方法不需要参数，请不要询问任何内容，直接生成请求。**
 - 举例：
 
 ```json
@@ -121,11 +123,14 @@ class Agent:
 请严格遵守上述规范，始终返回结构正确、字段齐全的纯 JSON。
 """
         self._available_methods = list(METHOD_REGISTRY.keys())
-        self.method_docs = METHOD_DOCS  # 参数说明字典
+        self._method_docs = METHOD_DOCS  # 参数说明字典
     @property
     def available_methods(self):
         # 动态返回当前所有注册的JSON-RPC方法名列表
         return list(METHOD_REGISTRY.keys())
+    @property
+    def method_docs(self):
+        return self._method_docs
     @available_methods.setter
     def available_methods(self, methods):
         self._available_methods = methods
@@ -159,7 +164,7 @@ class Agent:
 
       system_prompt = self._build_system_prompt(known_methods, extra_prompt)
       messages = self._build_messages(history_messages, system_prompt)
-      print("messages", messages)
+    #   print("messages", messages)
       if self.provider == "gemini":
           try:
               repsonse = self.client.chat(messages)
@@ -229,8 +234,8 @@ class Agent:
 
             params_info = []
             for method in known_methods:
-                if method in self.method_docs:
-                    params_desc = self.method_docs[method]
+                if method in self._method_docs:
+                    params_desc = self._method_docs[method]
                     params_str = ", ".join(f"{k}: {v}" for k, v in params_desc.items())
                     params_info.append(f"{method}({params_str})")
                 else:

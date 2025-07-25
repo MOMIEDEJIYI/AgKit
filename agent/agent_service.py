@@ -43,7 +43,7 @@ class AgentService:
         if progress_callback:
             progress_callback("调用模型生成回复中...")
         history = self.manager.get_history()
-        first_response = self.agent.ask(history)
+        first_response = self.agent.ask(history, known_methods=self.agent._available_methods, extra_prompt=None)
 
         if check_cancel():
             return "已取消"
@@ -85,7 +85,7 @@ class AgentService:
             progress_callback("开始流式调用模型...")
 
         history = self.manager.get_history()
-        first_response = self.agent.ask_stream(history, check_cancel=check_cancel)
+        first_response = self.agent.ask_stream(history, known_methods=self.agent._available_methods, extra_prompt=None, check_cancel=check_cancel)
         print("first_response:", first_response)
         if check_cancel():
             return "已取消"

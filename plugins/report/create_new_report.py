@@ -5,6 +5,7 @@ from agent.models.rpc_base import RpcResultBase
 @register_method(
   name="report.create_sales_report",
   param_desc={},
+  description="无参方法-创建销售报表", # 加描述有利于模型理解
   needs_nlg=True, # 二次自然语言包装
   tool_result_wrap = True # 工具结果包装
 )
@@ -21,6 +22,7 @@ def send_ui_command_create_sales_report(params=None) -> dict:
 @register_method(
   name="report.create_inventory_report",
   param_desc={},
+  description="无参方法-创建库存报表", # 加描述有利于模型理解
   needs_nlg=True, # 二次自然语言包装
   tool_result_wrap = True # 工具结果包装
 )
@@ -37,6 +39,7 @@ def send_ui_command_create_inventory_report(params=None) -> dict:
 @register_method(
   name="report.create_customer_report",
   param_desc={},
+  description="无参方法-创建客户报表", # 加描述有利于模型理解
   needs_nlg=True, # 二次自然语言包装
   tool_result_wrap = True # 工具结果包装
 )
@@ -54,6 +57,7 @@ def send_ui_command_create_customer_report(params=None) -> dict:
 @register_method(
   name="report.create_sales_and_profits_report",
   param_desc={},
+  description="无参方法-创建销售与利润报表", # 加描述有利于模型理解
   needs_nlg=True, # 二次自然语言包装
   tool_result_wrap = True # 工具结果包装
 )
@@ -70,6 +74,7 @@ def send_ui_command_create_sales_and_profits_report(params=None) -> dict:
 @register_method(
   name="report.create_operational_statistics_report",
   param_desc={},
+  description="无参方法-创建运营统计报表", # 加描述有利于模型理解
   needs_nlg=True, # 二次自然语言包装
   tool_result_wrap = True # 工具结果包装
 )

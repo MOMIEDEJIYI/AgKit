@@ -10,7 +10,8 @@ from rpc_registry import register_method
         "url": "请求的 URL，字符串",
         "params": "请求参数，字典，可选",
         "headers": "请求头，字典，可选"
-    }
+    },
+    description="同步 GET 请求"
 )
 def http_get(url, params=None, headers=None):
     try:
@@ -30,7 +31,8 @@ def http_get(url, params=None, headers=None):
         "url": "请求的 URL，字符串",
         "data": "请求体数据，字典或字符串",
         "headers": "请求头，字典，可选"
-    }
+    },
+    description="同步 POST 请求"
 )
 def http_post(url, data=None, headers=None):
     try:
@@ -50,7 +52,8 @@ def http_post(url, data=None, headers=None):
         "url": "请求的 URL，字符串",
         "params": "请求参数，字典，可选",
         "headers": "请求头，字典，可选"
-    }
+    },
+    description="异步 GET 请求"
 )
 async def async_http_get(url, params=None, headers=None):
     async with httpx.AsyncClient(timeout=10) as client:
@@ -71,7 +74,8 @@ async def async_http_get(url, params=None, headers=None):
         "url": "请求的 URL，字符串",
         "data": "请求体数据，字典或字符串",
         "headers": "请求头，字典，可选"
-    }
+    },
+    description="异步 POST 请求"
 )
 async def async_http_post(url, data=None, headers=None):
     async with httpx.AsyncClient(timeout=10) as client:

@@ -2,10 +2,14 @@ import os
 from rpc_registry import register_method
 from plugins.system.create_file import create_file
 
-@register_method("system.update_file", param_desc={
-    "file_name": "文件名",
-    "content": "文件内容"
-})
+@register_method(
+    name="system.update_file",
+    param_desc={
+        "file_name": "文件名",
+        "content": "文件内容"
+    },
+    description="更新文件",
+)
 def file_update(params: dict) -> dict:
     file_name = params.get("file_name", "")
     content = params.get("content", "")

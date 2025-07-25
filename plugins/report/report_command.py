@@ -5,6 +5,7 @@ from agent.models.rpc_base import RpcResultBase
 @register_method(
   name="report.export_json",
   param_desc={},
+  description="无参方法-导出json文件", # 加描述有利于模型理解
   needs_nlg=True, # 二次自然语言包装
   tool_result_wrap = True # 工具结果包装
 )

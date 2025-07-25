@@ -3,7 +3,11 @@ from rpc_registry import register_method
 from agent.models.rpc_base import RpcResultBase
 from common.error_codes import ErrorCode
 
-@register_method("system.delete_file", param_desc={"file_name": "文件名"})
+@register_method(
+    name="system.delete_file",
+    param_desc={"file_name": "文件名"},
+    description="删除文件",
+)
 def delete_file(params: dict) -> dict:
     file_name = params.get("file_name", "").strip()
     if not file_name:
@@ -28,7 +32,11 @@ def delete_file(params: dict) -> dict:
             code=ErrorCode.UNKNOWN_ERROR["code"]
         ).to_dict()
 
-@register_method("system.delete_files", param_desc={"file_names": "文件名列表"})
+@register_method(
+    name="system.delete_files",
+    param_desc={"file_names": "文件名列表"},
+    description="删除多个文件",
+)
 def delete_files(params: dict) -> dict:
     file_names = params.get("file_names", [])
     if not isinstance(file_names, list) or not file_names:

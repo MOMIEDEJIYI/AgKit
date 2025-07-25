@@ -5,6 +5,8 @@ from typing import Any
 from fastapi.concurrency import run_in_threadpool
 from agent.agent_service import AgentService
 import logging
+import json
+from utils import utils
 
 def get_chat_router(get_agent_service):
     router = APIRouter(prefix="/chat", tags=["chat"])
@@ -37,6 +39,20 @@ def get_chat_router(get_agent_service):
             else:
                 reply = await run_in_threadpool(service.ask, req.message)
 
+            if isinstance(reply, str):
+                # 清洗 reply
+                reply = utils.extract_json_from_text(reply)
+                try:
+                    reply = json.loads(reply)
+                except json.JSONDecodeError:
+                    pass
+            elif isinstance(reply, dict):
+                text = reply.get("text")
+                if isinstance(text, str):
+                    try:
+                        reply["text"] = json.loads(text)
+                    except json.JSONDecodeError:
+                        pass
             return ChatResponse(success=True, reply=reply, session_id=session)
         except Exception as e:
             logging.error(f"Chat API 出错: {e}", exc_info=True)

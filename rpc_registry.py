@@ -26,14 +26,16 @@ if base_dir not in sys.path:
     sys.path.insert(0, base_dir)
 
 
-def register_method(name, param_desc=None, **flags):
+def register_method(name, param_desc=None, description=None, **flags):
     def decorator(func):
         sig = inspect.signature(func)
         if len(sig.parameters) == 0:
             raise ValueError(f"注册的方法 {name} 必须至少接收一个参数 (params)，不使用请设置为params=None")
         METHOD_REGISTRY[name] = func
-        if param_desc is not None:
-            METHOD_DOCS[name] = param_desc
+        METHOD_DOCS[name] = {
+            "description": description or "",
+            "params": param_desc or {}
+        }
         METHOD_FLAGS[name] = flags
         return func
     return decorator
@@ -42,13 +44,17 @@ def register_method(name, param_desc=None, **flags):
 def save_snapshot():
     os.makedirs(os.path.dirname(SNAPSHOT_PATH), exist_ok=True)
 
-    missing_desc = [name for name in METHOD_REGISTRY if name not in METHOD_DOCS]
+    missing_desc = []
+    for name in METHOD_REGISTRY:
+        doc = METHOD_DOCS.get(name)
+        if not doc or not doc.get("description", "").strip():
+            missing_desc.append(name)
+
     if missing_desc:
-        print("以下方法缺少参数说明（param_desc）:")
+        print("以下方法缺少描述（description）不利于模型理解，请为每个方法添加描述后重试：")
         for name in missing_desc:
             func = METHOD_REGISTRY[name]
             print(f" - {name}: {func.__module__}.{func.__name__}")
-        print("请为每个方法添加参数说明后重试。")
         sys.exit(1)
 
     snapshot = {

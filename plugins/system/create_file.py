@@ -3,7 +3,11 @@ from rpc_registry import register_method
 from agent.models.rpc_base import RpcResultBase
 from plugins.system.error_codes import ErrorCode
 
-@register_method("system.create_file", param_desc={"file_name": "文件名", "content": "文件内容", "extension": "文件扩展名"})
+@register_method(
+    name="system.create_file",
+    param_desc={"file_name": "文件名", "content": "文件内容", "extension": "文件扩展名"},
+    description="创建文件", # 加描述有利于模型理解
+)
 def create_file(params: dict) -> dict:
     file_name = params.get("file_name") or params.get("filename", "")
     content = params.get("content", "")
@@ -23,7 +27,11 @@ def create_file(params: dict) -> dict:
         return RpcResultBase(f"❌ 创建失败：{e}", success=False, code=ErrorCode.FILE_CREATION_FAILED["code"]).to_dict()
 
 
-@register_method("system.create_files", param_desc={"file_names": "文件名列表", "contents": "文件内容列表", "extensions": "文件扩展名列表"})
+@register_method(
+    name="system.create_files",
+    param_desc={"file_names": "文件名列表", "contents": "文件内容列表", "extensions": "文件扩展名列表"},
+    description="创建多个文件",
+)
 def create_files(params: dict) -> dict:
     file_names = params.get("file_names", [])
     contents = params.get("contents", [])

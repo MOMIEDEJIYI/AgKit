@@ -8,7 +8,10 @@ ALLOWED_COMMANDS = [
     "pip list"
 ]
 
-@register_method("exec.execute_command", param_desc={"command": "要执行的命令"})
+@register_method(
+    name="exec.execute_command", param_desc={"command": "要执行的命令"},
+    description="执行命令",
+)
 def execute_command(command: str) -> str:
     # 简单检查命令是否以允许前缀开头，防止执行任意命令
     if not any(command.strip().startswith(allowed) for allowed in ALLOWED_COMMANDS):
