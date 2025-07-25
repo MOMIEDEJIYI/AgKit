@@ -18,7 +18,7 @@ build_exe_options = {
     ],
     "include_files": [
         ("runtime/method_registry_snapshot.json", "runtime/method_registry_snapshot.json"),
-        ("ui/assets", "ui/assets"),
+        ("assets", "assets"),
         ("plugins", "plugins")
     ]
 }

@@ -1,6 +1,15 @@
 import re
-import json
-import html
+import os
+import sys
+
+def resource_path(relative_path):
+    if hasattr(sys, '_MEIPASS'):
+        base_path = sys._MEIPASS
+    else:
+        # 返回项目根目录路径
+        base_path = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+    return os.path.join(base_path, relative_path)
+
 def extract_json_from_text(text: str) -> str:
     # 匹配 ```json ... ``` 或 ``` ... ``` 代码块内容
     pattern = r"```json(.*?)```|```(.*?)```"

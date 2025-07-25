@@ -20,7 +20,9 @@ class ChatBubble(QWidget):
             layout.addWidget(label)
             label.setStyleSheet("""
                 background-color: #d1eaff;
-                color: #000;
+                color: #000000;
+                font-style: normal;
+                font-family: "Microsoft YaHei", 微软雅黑, sans-serif;
                 border-radius: 12px;
                 padding: 8px;
             """)
@@ -29,9 +31,13 @@ class ChatBubble(QWidget):
             layout.addStretch()  # 右边留空，左对齐
             label.setStyleSheet("""
                 background-color: #f0f0f0;
-                color: #333;
+                color: #333333;
+                font-style: normal;
+                font-family: "Microsoft YaHei", 微软雅黑, sans-serif;
                 border-radius: 12px;
                 padding: 8px;
             """)
+
+
 
         self.setLayout(layout)

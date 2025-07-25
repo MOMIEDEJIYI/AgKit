@@ -1,0 +1,23 @@
+#navbar {
+    background-color: #fafafa;  /* 超浅灰，柔和 */
+    border-radius: 8px;
+    padding: 12px;
+}
+
+#navbar QPushButton {
+    border: none;
+    color: #555555;
+    font-weight: 600;
+    font-size: 15px;
+    text-align: left;
+    border-radius: 6px;
+}
+
+#navbar QPushButton:hover {
+    background-color: #f5f5f5;  /* 悬浮浅灰 */
+}
+
+#navbar QPushButton:checked {
+    background-color: #dadada;  /* 选中时用浅粉色，轻柔柔和 */
+    font-weight: 700;
+}

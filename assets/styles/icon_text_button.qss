@@ -1,0 +1,25 @@
+#icon_text_button {
+    border-radius: 6px;
+    background-color: #f8f8f8;       /* 与 title_bar 背景一致 */
+    color: #333333;                  /* 与 title_label 字体色一致 */
+    font-weight: 500;
+}
+
+#icon_text_button:hover {
+    background-color: #eeeeee;       /* 略深一层 hover 效果 */
+}
+
+#icon_text_button:pressed {
+    background-color: #dddddd;       /* 按下时更明显 */
+}
+
+#icon_text_button[selected="true"] {
+    background-color: #dcdcdc;       /* title_bar 的边框色作为高亮背景 */
+    font-weight: bold;
+    color: #000000;                  /* 可稍加突出 */
+}
+
+#icon_label {
+    background-color: transparent;   /* 移除原来的 aquamarine */
+    color: #333333;                  /* 与文字保持一致 */
+}
