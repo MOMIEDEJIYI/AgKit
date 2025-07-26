@@ -1,0 +1,64 @@
+/* 卡片样式 */
+#settingsCard {
+    background-color: white;
+    border-radius: 12px;
+    border: 1px solid #e0e0e0;
+}
+
+/* 卡片标题 */
+#cardTitle {
+    font-size: 18px;
+    font-weight: 600;
+    color: #2d3748;
+}
+
+/* 分隔线 */
+#divider {
+    border: 1px solid #edf2f7;
+    margin: 0;
+}
+
+/* 输入标签 */
+#inputLabel {
+    font-size: 14px;
+    color: #4a5568;
+    font-weight: 500;
+}
+
+/* 输入框样式 */
+#styledInput {
+    height: 36px;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    padding: 0 12px;
+    background-color: #ffffff;
+    font-size: 14px;
+    color: #2d3748;
+}
+
+#styledInput:hover {
+    border-color: #cbd5e0;
+}
+
+#styledInput:focus {
+    border-color: #4299e1;
+    outline: none;
+}
+
+/* 按钮样式 */
+#primaryButton {
+    background-color: #4299e1;
+    color: white;
+    border-radius: 6px;
+    font-weight: 500;
+    font-size: 14px;
+    border: none;
+}
+
+#primaryButton:hover {
+    background-color: #3182ce;
+}
+
+#primaryButton:pressed {
+    background-color: #2b6cb0;
+}

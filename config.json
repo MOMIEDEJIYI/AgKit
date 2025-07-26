@@ -1,0 +1,21 @@
+{
+  "current_model": "default",
+  "agent": {
+    "default": {
+      "provider": "deepseek",
+      "api_key": "your_api_key_here",
+      "model": "deepseek-chat",
+      "base_url": "https://api.deepseek.com/v1"
+    },
+    "openai_model": {
+      "provider": "openai",
+      "model": "gpt-3.5-turbo",
+      "api_key": "new_model_api_key",
+      "base_url": "https://api.openai.com/v1"
+    }
+  },
+  "conversation": {
+    "user_id": "user1",
+    "history_dir": "conversation/history/default"
+  }
+}

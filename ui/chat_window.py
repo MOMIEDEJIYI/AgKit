@@ -11,6 +11,7 @@ from ui.components.navbar import NavBar
 from ui.components.chat_panel import ChatPanel
 from ui.components.request_panel import RequestPanel
 from ui.components.title_bar import TitleBar
+from ui.components.settings.settings_panel import SettingsPanel  # 你自己的设置页
 
 class ChatWindow(QMainWindow):
     def __init__(self):
@@ -42,10 +43,17 @@ class ChatWindow(QMainWindow):
         self.content_area.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         self.chat_panel = ChatPanel()
         self.request_panel = RequestPanel()
-        self.content_area.addWidget(self.chat_panel)
-        self.content_area.addWidget(self.request_panel)
+        self.settings_panel = SettingsPanel()
+
+        self.pages = {
+            "chat": self.chat_panel,
+            "request": self.request_panel,
+            "settings": self.settings_panel
+        }
+        for widget in self.pages.values():
+            self.content_area.addWidget(widget)
         content_layout.addWidget(self.content_area)
-        
+
         self.title_bar = TitleBar(self)
         main_layout.addWidget(self.title_bar)
         main_layout.addWidget(content_widget)
@@ -99,10 +107,11 @@ class ChatWindow(QMainWindow):
             print(f"样式文件没找到: {qss_path}")
 
     def switch_page(self, page):
-        if page == "chat":
-            self.content_area.setCurrentIndex(0)
-        elif page == "request":
-            self.content_area.setCurrentIndex(1)
+        widget = self.pages.get(page)
+        if widget:
+            self.content_area.setCurrentWidget(widget)
+        else:
+            print(f"未知页面: {page}")
 
     def show_with_animation(self):
         screen = self.screen().availableGeometry()

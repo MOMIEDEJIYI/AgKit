@@ -4,15 +4,20 @@ import json
 from datetime import datetime
 import logging
 from utils import utils
+import config
 
 logger = logging.getLogger(__name__)
 
 class ConversationManager:
-    def __init__(self, user_id="default"):
-        self.history_dir = f"conversation/history/{user_id}"
+    def __init__(self, user_id=None, history_dir=None):
+        self.user_id = user_id if user_id is not None else self.config.get("user_id", "default")
+        # 优先使用传入的 history_dir，否则从配置读取或默认生成
+        if history_dir is not None:
+            self.history_dir = history_dir
+        else:
+            self.history_dir = self.config.get("history_dir", f"conversation/history/{self.user_id}")
         os.makedirs(self.history_dir, exist_ok=True)
         self.current_session = None
-        logger.info(f"[ConversationManager] 正在加载 {user_id} 的对话记录...")
         self.sessions = self._load_sessions()
 
     def _load_sessions(self):

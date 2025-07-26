@@ -27,11 +27,18 @@ class NavBar(QWidget):
         self.setAttribute(Qt.WA_TranslucentBackground)
 
     def _init_ui(self):
+        # 主容器布局（垂直）
         main_layout = QVBoxLayout(self)
         main_layout.setContentsMargins(12, 12, 12, 12)
-        main_layout.setSpacing(16)
+        main_layout.setSpacing(0)
 
-        # 顶部折叠按钮区域
+        # 中部按钮区域
+        center_widget = QWidget()
+        center_layout = QVBoxLayout(center_widget)
+        center_layout.setContentsMargins(0, 0, 0, 0)
+        center_layout.setSpacing(16)
+
+        # 折叠按钮区域
         top_layout = QHBoxLayout()
         top_layout.setContentsMargins(0, 0, 0, 0)
         top_layout.setSpacing(0)
@@ -44,14 +51,14 @@ class NavBar(QWidget):
         self.toggle_btn.clicked.connect(self.toggle_expand)
         top_layout.addWidget(self.toggle_btn)
 
-        main_layout.addLayout(top_layout)
+        center_layout.addLayout(top_layout)
 
-        # 按钮组
+        # 创建按钮组
         self.btn_group = QButtonGroup(self)
         self.btn_group.setExclusive(True)
         self.btn_group.buttonClicked.connect(self._on_button_clicked)
 
-        # 添加按钮
+        # 添加主按钮
         self.chat_btn = IconTextButton("💬", "会话")
         self.req_btn = IconTextButton("⚙️", "请求")
         self.custom_buttons = [self.chat_btn, self.req_btn]
@@ -62,13 +69,28 @@ class NavBar(QWidget):
             btn.setFixedHeight(40)
             btn.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
             self.btn_group.addButton(btn)
-            main_layout.addWidget(btn)
+            center_layout.addWidget(btn)
 
         # 默认选中第一个按钮
         self.chat_btn.set_selected(True)
         self.chat_btn.setChecked(True)
 
+        # 加入中部区域
+        main_layout.addWidget(center_widget)
         main_layout.addStretch()
+
+        # 设置按钮固定底部
+        self.settings_btn = IconTextButton("🛠️", "设置")
+        self.settings_btn.setCheckable(True)
+        self.settings_btn.setCursor(Qt.PointingHandCursor)
+        self.settings_btn.setFixedHeight(40)
+        self.settings_btn.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
+        self.btn_group.addButton(self.settings_btn)
+        main_layout.addWidget(self.settings_btn)
+
+        # 全部按钮收集
+        self.custom_buttons.append(self.settings_btn)
+
         self.setLayout(main_layout)
 
     def toggle_expand(self):
@@ -104,6 +126,8 @@ class NavBar(QWidget):
                 self.on_nav_click("chat")
             elif btn == self.req_btn:
                 self.on_nav_click("request")
+            elif btn == self.settings_btn:
+                self.on_nav_click("settings")
 
     def _load_stylesheet(self):
         """加载样式文件"""

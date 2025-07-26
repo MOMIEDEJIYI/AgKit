@@ -8,18 +8,16 @@ from agent.models.gemini_client import GeminiClient
 
 logger = logging.getLogger(__name__)
 class Agent:
-    def __init__(
-        self,
-        api_key: str = API_KEY,
-        base_url: str = BASE_URL,
-        model: str = MODEL,
-    ):
-        self.provider = PROVIDER
-        self.model = model
-        if self.provider == "deepseek" or self.provider == "openai":
-            self.client = OpenAI(api_key=api_key, base_url=base_url)
+    def __init__(self, config: dict):
+        self.provider = config.get("provider", "deepseek").lower()
+        self.api_key = config.get("api_key")
+        self.base_url = config.get("base_url")
+        self.model = config.get("model", "deepseek-chat")
+        
+        if self.provider in ["deepseek", "openai"]:
+            self.client = OpenAI(api_key=self.api_key, base_url=self.base_url)
         elif self.provider == "gemini":
-            self.client = GeminiClient(api_key=api_key, model=model, endpoint=base_url)
+            self.client = GeminiClient(api_key=self.api_key, model=self.model, endpoint=self.base_url)
         else:
             raise ValueError(f"不支持的 PROVIDER: {self.provider}")
         self.system_prompt = """

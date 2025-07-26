@@ -3,14 +3,25 @@ from agent.manager import ConversationManager
 from agent.orchestrator import AgentOrchestrator
 from agent.agent import Agent
 from utils import utils
+from config_service import ConfigService
 import logging
 
 logger = logging.getLogger(__name__)
 class AgentService:
     def __init__(self, user_id="default"):
         self._cancel_flag = False
-        self.manager = ConversationManager(user_id)
-        self.agent = Agent()
+        # 统一通过配置服务获取配置
+        config = ConfigService()
+        conversation_cfg = config.get_section("conversation")
+        user_id = conversation_cfg.get("user_id", "default")
+        history_dir = conversation_cfg.get("history_dir", f"conversation/history/{user_id}")
+        # 将配置参数传给会话管理器
+        self.manager = ConversationManager(user_id=user_id, history_dir=history_dir)
+
+        # 获取 agent 配置并传给 Agent
+        current_model = config.get_current_model()  # 获取当前模型
+        agent_config = config.get_model_config(current_model)
+        self.agent = Agent(agent_config)
         self.orchestrator = AgentOrchestrator(self.agent)
 
         if not self.manager.list_sessions():

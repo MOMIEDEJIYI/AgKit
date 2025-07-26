@@ -6,6 +6,7 @@ from PyQt5.QtWidgets import (
     QWidget, QHBoxLayout, QVBoxLayout, QLabel,QMessageBox,
     QListWidget, QScrollArea, QLineEdit, QPushButton, QApplication, QDialog, QListWidgetItem
 )
+from PyQt5.QtGui import QFont
 from vosk import Model, KaldiRecognizer
 import sounddevice as sd
 import queue
@@ -28,6 +29,7 @@ class ChatPanel(QWidget):
         left_layout = QVBoxLayout()
 
         self.new_session_button = QPushButton("新聊天")
+        self.new_session_button.setObjectName("new_session_button")
         self.new_session_button.clicked.connect(self.on_new_session)
 
         top_button_row = QHBoxLayout()
@@ -37,14 +39,15 @@ class ChatPanel(QWidget):
 
         self.session_list = QListWidget()
         self.session_list.setObjectName("session_list")
-        self.session_list.addItems(self.service.manager.list_sessions())
-        # for file_name in self.service.manager.list_sessions():
-        #     display_name = file_name[:15] + "..." if len(file_name) > 15 else file_name
-        #     item = QListWidgetItem(display_name)
-        #     item.setData(Qt.UserRole, file_name)
-        #     self.session_list.addItem(item)
+        # self.session_list.addItems(self.service.manager.list_sessions())
+        font = QFont("Microsoft YaHei", 10)
+        for session in self.service.manager.list_sessions():
+            item = QListWidgetItem(session)
+            item.setFont(font)
+            self.session_list.addItem(item)
+
         self.session_list.setFocusPolicy(Qt.NoFocus)
-        self.session_list.setMaximumWidth(220)
+        self.session_list.setMaximumWidth(245)
         left_layout.addWidget(self.session_list)
 
         main_layout.addLayout(left_layout)
@@ -116,7 +119,6 @@ class ChatPanel(QWidget):
         items = self.session_list.findItems(current_file, Qt.MatchFlag.MatchExactly)
         if items:
             self.session_list.setCurrentItem(items[0])
-
         # 新增一个思考中显示区
         self.thinking_label = QLabel()
         self.thinking_label.setStyleSheet("color: gray; font-style: italic;")

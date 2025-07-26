@@ -1,103 +1,200 @@
+/* 主容器样式 */
 #chat_panel {
-    background-color: #f8f8f8;              /* 和 title_bar 背景一致 */
-    color: #333333;                         /* 和 title_label 字体一致 */
-    font-family: "Microsoft YaHei";
+    background-color: #f8f9fa;  /* 背景色调整为浅灰色 */
+    color: #333333;  /* 文本颜色设置为深灰色 */
+    font-family: 'Segoe UI', 'Microsoft YaHei', sans-serif;
     font-size: 14px;
+    border-radius: 8px;
+    padding: 20px;
 }
 
+/* 按钮基础样式 */
 #chat_panel QPushButton {
-    background-color: #e0e0e0;
-    color: #333333;
+    background-color: #e2e8f0;  /* 按钮背景色为浅灰蓝色 */
+    color: #333333;  /* 按钮文字为深灰色 */
     border-radius: 6px;
-    padding: 6px 12px;
-    font-weight: 600;
-    border: 1px solid #cccccc;
+    padding: 8px 16px;
+    font-weight: 500;
+    font-size: 14px;
+    border: 1px solid #e2e8f0;
 }
 
+/* 按钮 Hover/Pressed/Disabled 状态 */
 #chat_panel QPushButton:hover {
-    background-color: #dcdcdc;
+    background-color: #cbd5e0;  /* 悬浮时背景色为深灰蓝色 */
+    border-color: #a0aec0;
 }
 
 #chat_panel QPushButton:pressed {
-    background-color: #c0c0c0;
+    background-color: #a0aec0;  /* 按下时背景色为更深的灰蓝色 */
+    border-color: #718096;
 }
 
 #chat_panel QPushButton:disabled {
-    background-color: #eeeeee;
+    background-color: #f0f0f0;
     color: #aaaaaa;
     border: 1px solid #dddddd;
 }
 
+/* 聚焦时的边框颜色 */
 #chat_panel QPushButton:focus {
     outline: none;
-    border: 1px solid #999999;
+    border: 1.5px solid #3182ce;  /* 聚焦时的边框颜色 */
 }
 
-#chat_panel QListWidget {
+/* 新聊天按钮 */
+#new_session_button {
+    background-color: #4299e1;  /* 新聊天按钮背景色 */
+    color: white;
+    font-weight: 700;
+}
+
+#new_session_button:hover {
+    background-color: #3182ce;  /* 悬浮时背景色 */
+}
+
+#new_session_button:pressed {
+    background-color: #2b6cb0;  /* 按下时背景色 */
+}
+
+/* 删除会话按钮 */
+#delete_button {
+    background-color: #fc8181;  /* 删除按钮背景色 */
+    color: white;
+    font-weight: 700;
+}
+
+#delete_button:hover {
+    background-color: #f56565;  /* 悬浮时背景色 */
+}
+
+#delete_button:pressed {
+    background-color: #e53e3e;  /* 按下时背景色 */
+}
+
+/* 发送按钮 */
+#send_button {
+    background-color: #4299e1;  /* 发送按钮背景色 */
+    color: white;
+    font-weight: 700;
+}
+
+#send_button:hover {
+    background-color: #38a169;  /* 悬浮时背景色 */
+}
+
+#send_button:pressed {
+    background-color: #2f855a;  /* 按下时背景色 */
+}
+
+/* 取消执行按钮 */
+#cancel_button {
+    background-color: #e53e3e;  /* 取消按钮背景色 */
+    color: white;
+    font-weight: 700;
+}
+
+#cancel_button:hover {
+    background-color: #c9302c;  /* 悬浮时背景色 */
+}
+
+#cancel_button:pressed {
+    background-color: #9b2c2c;  /* 按下时背景色 */
+}
+
+/* 语言输入按钮 */
+#send_voice {
+    background-color: #5bc0de;  /* 语言输入按钮背景色 */
+    color: white;
+    font-weight: 700;
+}
+
+#send_voice:disabled {
+    background-color: #a3d5de;  /* 禁用状态背景色 */
+    color: #eeeeee;
+}
+
+#send_voice:hover:!disabled {
+    background-color: #31b0d5;  /* 悬浮时背景色 */
+}
+
+#send_voice:pressed {
+    background-color: #269abc;  /* 按下时背景色 */
+}
+
+/* 会话列表 */
+#session_list {
     background-color: #ffffff;
-    border: 1px solid #dcdcdc;
-    border-radius: 6px;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
     padding: 4px;
     font-size: 14px;
     color: #333333;
+    margin-bottom: 10px;
 }
 
-#chat_panel QListWidget::item {
+/* 会话项 */
+#session_list::item {
     padding: 8px 12px;
-    margin: 4px;
+    margin: 4px 0;
     border-radius: 6px;
     background-color: transparent;
-}
-
-#chat_panel QListWidget::item:selected {
-    background-color: #dcdcdc;
-    color: #000000;
-    font-weight: bold;
-}
-
-#chat_panel QListWidget::item:hover {
-    background-color: #eeeeee;
-    color: #000000;
-}
-
-#chat_panel QListWidget::item:focus {
-    outline: none;
-    border: none;
-    background-color: #dcdcdc;
-}
-
-#chat_panel QLineEdit {
-    background-color: #ffffff;
-    font-size: 14px;
-    border: 1px solid #dcdcdc;
-    border-radius: 6px;
-    padding: 6px 8px;
+    font-family: 'Microsoft YaHei', sans-serif;
+    font-size: 12px;
     color: #333333;
 }
 
-#chat_panel QLineEdit:focus {
-    border: 1px solid #999999;
+#session_list::item:selected {
+    background-color: #e2e8f0;  /* 选中项背景色 */
+    color: #000000;
+    font-weight: 600;
+}
+
+#session_list::item:hover {
+    background-color: #edf2f7;  /* 悬浮时背景色 */
+    color: #000000;
+}
+
+#session_list::item:focus {
+    outline: none;
+    border: none;
+    background-color: #e2e8f0;
+}
+
+/* 输入框样式 */
+#input_edit {
+    background-color: #ffffff;
+    font-size: 14px;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    padding: 8px 12px;
+    color: #333333;
+}
+
+#input_edit:focus {
+    border: 1.5px solid #3182ce;
     outline: none;
 }
 
-#chat_panel QScrollArea {
-    border: none;
+/* 滚动区域 */
+#chat_area {
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    padding: 10px;
     background-color: #ffffff;
+    max-height: 400px;
 }
 
+/* chat_container 背景和内边距 */
+#chat_container {
+    background-color: #f8f9fa;
+    padding: 8px;
+}
+
+/* 标签 */
 #chat_panel QLabel {
     color: #666666;
     font-style: italic;
     padding: 4px 8px;
-}
-
-#chat_area {
-    border: 1px solid #dcdcdc;
-    border-radius: 6px;
-    padding: 6px 8px;
-    background-color: #ffffff;
-}
-
-#chat_container {
-    background-color: #f8f8f8;
+    font-size: 12px;
 }

@@ -1,0 +1,173 @@
+/* 主容器样式 */
+QWidget {
+    background-color: #f8f9fa;
+    font-family: 'Segoe UI', 'Microsoft YaHei', sans-serif;
+}
+
+/* 卡片容器 */
+#modelCardContainer {
+    background-color: #ffffff;
+    border-radius: 12px;
+    border: 1px solid #e0e0e0;
+}
+
+/* 卡片标题 */
+#cardTitle {
+    font-size: 18px;
+    font-weight: 600;
+    color: #2d3748;
+}
+
+/* 分隔线 */
+#divider {
+    border: 1px solid #edf2f7;
+    margin: 0;
+}
+
+/* 输入标签 */
+#inputLabel {
+    font-size: 14px;
+    color: #4a5568;
+    font-weight: 500;
+}
+
+/* 下拉框样式 */
+#styledCombo {
+    height: 36px;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    padding: 0 12px;
+    background-color: #ffffff;
+    font-size: 14px;
+    color: #2d3748;
+}
+
+#styledCombo:hover {
+    border-color: #cbd5e0;
+}
+
+#styledCombo:focus {
+    border-color: #4299e1;
+    outline: none;
+}
+
+/* 输入框样式 */
+#styledInput {
+    height: 36px;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    padding: 0 12px;
+    background-color: #ffffff;
+    font-size: 14px;
+    color: #2d3748;
+}
+
+#styledInput:hover {
+    border-color: #cbd5e0;
+}
+
+#styledInput:focus {
+    border-color: #4299e1;
+    outline: none;
+}
+
+/* 模型信息卡片 */
+#modelInfoCard {
+    background-color: #f7fafc;
+    border-radius: 8px;
+    border: 1px solid #e2e8f0;
+    padding: 15px;
+}
+
+#modelCardTitle {
+    font-size: 16px;
+    font-weight: 600;
+    color: #2b6cb0;
+    margin-bottom: 10px;
+}
+
+#modelCardLabel {
+    font-size: 14px;
+    color: #4a5568;
+    padding: 4px 0;
+}
+
+/* 按钮样式 */
+QPushButton {
+    height: 40px;
+    border-radius: 6px;
+    font-weight: 500;
+    font-size: 14px;
+    padding: 0 20px;
+    border: none;
+}
+
+#primaryButton {
+    background-color: #4299e1;
+    color: white;
+}
+
+#primaryButton:hover {
+    background-color: #3182ce;
+}
+
+#primaryButton:pressed {
+    background-color: #2b6cb0;
+}
+
+#secondaryButton {
+    background-color: #e2e8f0;
+    color: #2d3748;
+}
+
+#secondaryButton:hover {
+    background-color: #cbd5e0;
+}
+
+#secondaryButton:pressed {
+    background-color: #a0aec0;
+}
+
+#dangerButton {
+    background-color: #fc8181;
+    color: white;
+}
+
+#dangerButton:hover {
+    background-color: #f56565;
+}
+
+#dangerButton:pressed {
+    background-color: #e53e3e;
+}
+
+/* 开关样式 */
+#toggleSwitch {
+    /* 隐藏默认样式 */
+    spacing: 0;
+}
+
+#toggleSwitch::indicator {
+    width: 50px;
+    height: 24px;
+    border-radius: 12px;
+    background-color: #cbd5e0;
+    border: 1px solid #cbd5e0;
+}
+
+#toggleSwitch::indicator:checked {
+    background-color: #48bb78;
+    border-color: #48bb78;
+}
+
+#toggleSwitch::indicator:checked:hover {
+    background-color: #38a169;
+}
+
+#toggleSwitch::indicator:hover {
+    background-color: #a0aec0;
+}
+
+#toggleSwitch::indicator:unchecked:hover {
+    background-color: #a0aec0;
+}

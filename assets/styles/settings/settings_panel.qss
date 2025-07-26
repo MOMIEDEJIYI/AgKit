@@ -1,0 +1,83 @@
+/* 设置面板全局样式 */
+SettingsPanel {
+    background-color: #f8f9fa;
+}
+
+/* 标签页样式 */
+#settingsTabs {
+    background-color: transparent;
+}
+
+#settingsTabs::pane {
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    background-color: white;
+    margin-top: -1px;
+    margin-bottom: 0;
+    padding: 0;
+}
+
+#settingsTabs QTabBar {
+    background-color: transparent;
+    margin-left: 10px;
+}
+
+#settingsTabs QTabBar::tab {
+    background-color: #edf2f7;
+    color: #4a5568;
+    padding: 10px 20px;
+    border: 1px solid #e2e8f0;
+    border-bottom: none;
+    border-top-left-radius: 8px;
+    border-top-right-radius: 8px;
+    margin-right: 4px;
+    font-weight: 500;
+}
+
+#settingsTabs QTabBar::tab:selected {
+    background-color: white;
+    color: #4299e1;
+    border-bottom: 2px solid white;
+    margin-bottom: -1px;
+}
+
+#settingsTabs QTabBar::tab:hover {
+    background-color: #e2e8f0;
+}
+
+QScrollArea {
+    border: none;
+    background-color: transparent;
+}
+
+QScrollBar:vertical {
+    border: none;
+    background: #f1f5f9;
+    width: 10px;
+    margin: 0px 0px 0px 0px;
+}
+
+QScrollBar::handle:vertical {
+    background: #cbd5e0;
+    border-radius: 4px;
+    min-height: 20px;
+}
+
+QScrollBar::handle:vertical:hover {
+    background: #a0aec0;
+}
+
+QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {
+    height: 0px;
+    background: none;
+}
+
+QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {
+    background: none;
+}
+
+/* 设置面板内容样式 */
+ModelSettingsPanel, ConversationSettingsPanel {
+    background-color: white;
+    padding: 20px;
+}
