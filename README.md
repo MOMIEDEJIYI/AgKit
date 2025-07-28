@@ -14,11 +14,10 @@
 pip install -r requirements.txt
 ```
 
-并在根目录添加 `.env` 文件，配置模型 API KEY
+并在根目录添加 `.env` 文件，配置模型 API KEY，PROVIDER值支持deepseek、gemini、openai
 
 ```bash
 PROVIDER=deepseek
-DEEPSEEK_API_KEY=your_key_here
 GEMINI_API_KEY=your_key_here
 OPENAI_API_KEY=your_key_here
 ```
