@@ -1,8 +1,8 @@
 /* 主容器样式 */
 #chat_panel {
-    background-color: #f8f9fa;  /* 背景色调整为浅灰色 */
+    /* background-color: #f8f9fa;  背景色调整为浅灰色 */
     color: #333333;  /* 文本颜色设置为深灰色 */
-    font-family: 'Segoe UI', 'Microsoft YaHei', sans-serif;
+    font-family: 'Microsoft YaHei';
     font-size: 14px;
     border-radius: 8px;
     padding: 20px;
@@ -10,7 +10,7 @@
 
 /* 按钮基础样式 */
 #chat_panel QPushButton {
-    background-color: #e2e8f0;  /* 按钮背景色为浅灰蓝色 */
+    /* background-color: #e2e8f0;  按钮背景色为浅灰蓝色 */
     color: #333333;  /* 按钮文字为深灰色 */
     border-radius: 6px;
     padding: 8px 16px;
@@ -44,8 +44,9 @@
 
 /* 新聊天按钮 */
 #new_session_button {
-    background-color: #4299e1;  /* 新聊天按钮背景色 */
+    /* background-color: #4299e1;  新聊天按钮背景色 */
     color: white;
+    font-family: 'Microsoft YaHei', sans-serif;
     font-weight: 700;
 }
 
@@ -62,6 +63,7 @@
     background-color: #fc8181;  /* 删除按钮背景色 */
     color: white;
     font-weight: 700;
+    font-family: 'Microsoft YaHei', sans-serif;
 }
 
 #delete_button:hover {
@@ -77,6 +79,7 @@
     background-color: #4299e1;  /* 发送按钮背景色 */
     color: white;
     font-weight: 700;
+    font-family: 'Microsoft YaHei', sans-serif;
 }
 
 #send_button:hover {
@@ -92,6 +95,7 @@
     background-color: #e53e3e;  /* 取消按钮背景色 */
     color: white;
     font-weight: 700;
+    font-family: 'Microsoft YaHei', sans-serif;
 }
 
 #cancel_button:hover {

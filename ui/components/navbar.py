@@ -5,7 +5,7 @@ from PyQt5.QtWidgets import (
 from PyQt5.QtCore import Qt, QPropertyAnimation
 import os
 from utils import utils
-from ui.components.icon_text_button import IconTextButton
+from ui.components.base.icon_text_button import IconTextButton
 
 
 class NavBar(QWidget):

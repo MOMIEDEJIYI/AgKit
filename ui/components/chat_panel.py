@@ -14,7 +14,7 @@ import json
 from PyQt5.QtCore import Qt, QPropertyAnimation, QRect, QEasingCurve
 from agent.worker_thread import WorkerThread
 from agent.agent_service import AgentService
-from ui.components.chat_bubble import ChatBubble
+from ui.components.base.chat_bubble import ChatBubble
 from utils import utils
 
 class ChatPanel(QWidget):

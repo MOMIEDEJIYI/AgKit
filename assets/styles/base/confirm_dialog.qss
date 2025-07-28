@@ -1,0 +1,31 @@
+QDialog {
+    background-color: white;
+    border-radius: 10px;
+}
+
+QLabel {
+    font-size: 14px;
+    color: #1a202c;
+}
+
+QPushButton#primaryButton {
+    background-color: #2563eb;
+    color: white;
+    padding: 6px 14px;
+    border-radius: 6px;
+}
+
+QPushButton#primaryButton:hover {
+    background-color: #1d4ed8;
+}
+
+QPushButton#secondaryButton {
+    background-color: #e2e8f0;
+    color: #1a202c;
+    padding: 6px 14px;
+    border-radius: 6px;
+}
+
+QPushButton#secondaryButton:hover {
+    background-color: #cbd5e1;
+}

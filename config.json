@@ -3,8 +3,8 @@
   "agent": {
     "default": {
       "provider": "deepseek",
-      "api_key": "your_api_key_here",
       "model": "deepseek-chat",
+      "api_key": "your_api_key_here",
       "base_url": "https://api.deepseek.com/v1"
     },
     "openai_model": {
@@ -12,10 +12,22 @@
       "model": "gpt-3.5-turbo",
       "api_key": "new_model_api_key",
       "base_url": "https://api.openai.com/v1"
+    },
+    "new_model_1": {
+      "provider": "deepseek",
+      "model": "new_model",
+      "api_key": "",
+      "base_url": "https://api.deepseek.com/v1"
+    },
+    "new_model_2": {
+      "provider": "deepseek",
+      "api_key": "",
+      "model": "new_model",
+      "base_url": "https://api.deepseek.com/v1"
     }
   },
   "conversation": {
-    "user_id": "user1",
-    "history_dir": "conversation/history/default"
+    "user_id": "default",
+    "history_dir": "conversation/history/"
   }
 }
