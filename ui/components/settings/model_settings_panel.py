@@ -4,6 +4,7 @@ from PyQt5.QtWidgets import (
 )
 from ui.components.base.confirm_dialog import ConfirmDialog
 from ui.components.base.popup_dialog import PopupDialog
+from ui.components.base.no_wheel_combo_box import NoWheelComboBox
 from PyQt5.QtCore import Qt
 import os
 from utils import utils
@@ -71,7 +72,7 @@ class ModelSettingsPanel(QWidget):
         model_label = QLabel("选择模型:")
         model_label.setObjectName("inputLabel")
 
-        self.model_combo = QComboBox()
+        self.model_combo = NoWheelComboBox()
         self.model_combo.setObjectName("styledCombo")
         self.model_combo.addItems(self.get_model_keys())
         self.model_combo.currentTextChanged.connect(self.update_model_info)

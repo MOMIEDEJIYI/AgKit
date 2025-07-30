@@ -1,7 +1,6 @@
 # agent/agent.py
 
 from openai import OpenAI
-from config import API_KEY, BASE_URL, MODEL, PROVIDER
 from rpc_registry import METHOD_REGISTRY, METHOD_DOCS
 import logging
 from agent.models.gemini_client import GeminiClient
@@ -13,7 +12,9 @@ class Agent:
         self.api_key = config.get("api_key")
         self.base_url = config.get("base_url")
         self.model = config.get("model", "deepseek-chat")
-        
+        print(f"provider: {self.provider}")
+        print(f"base_url: {self.base_url}")
+        print(f"model: {self.model}")
         if self.provider in ["deepseek", "openai"]:
             self.client = OpenAI(api_key=self.api_key, base_url=self.base_url)
         elif self.provider == "gemini":
@@ -134,7 +135,7 @@ class Agent:
         self._available_methods = methods
     def ask(self, history_messages: list[dict], known_methods=None, extra_prompt=None) -> str:
       logger.info(f"agent ask")
-      print("请求 URL:", BASE_URL)
+      print("请求 URL:", self.base_url)
 
       # 拼接完整 system prompt
       system_prompt = self._build_system_prompt(known_methods, extra_prompt)
@@ -158,7 +159,7 @@ class Agent:
 
     def ask_stream(self, history_messages: list[dict], known_methods=None, extra_prompt=None, check_cancel=lambda: False) -> str:
       logger.info(f"agent ask_stream")
-      print("请求 URL:", BASE_URL)
+      print("请求 URL:", self.base_url)
 
       system_prompt = self._build_system_prompt(known_methods, extra_prompt)
       messages = self._build_messages(history_messages, system_prompt)
