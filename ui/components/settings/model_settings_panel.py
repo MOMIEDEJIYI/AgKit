@@ -155,6 +155,9 @@ class ModelSettingsPanel(QWidget):
         self.base_url_label = QLabel()
         for label in [self.provider_label, self.model_label, self.api_key_label, self.base_url_label]:
             label.setObjectName("modelCardLabel")
+            label.setWordWrap(True)
+            label.setTextInteractionFlags(Qt.TextSelectableByMouse)
+
         card_layout.addWidget(self.card_title)
         card_layout.addWidget(self.provider_label)
         card_layout.addWidget(self.model_label)

@@ -12,35 +12,6 @@ class AgentOrchestrator:
     def __init__(self, agent):
         self.agent = agent
 
-    # def _format_tool_response_for_history(self, response, rpc_response):
-    #     """
-    #     格式化助手回复和工具调用结果，用于追加到历史。
-    #     兼容 Gemini 和 OpenAI，避免传原始 JSON，方便模型理解。
-    #     """
-    #     response = utils.process_assistant_content(response)
-    #     # assistant 内容优先用 explanation，没有则用完整 response 的简化文本
-    #     if isinstance(response, dict):
-    #         assistant_content = response.get("explanation")
-    #         if not assistant_content:
-    #             # 尽量转换成字符串，避免直接json dump
-    #             assistant_content = json.dumps(response, ensure_ascii=False)
-    #     else:
-    #         assistant_content = str(response)
-
-    #     # 解析 rpc_response 的结果文本
-    #     rpc_result_text = ""
-    #     if rpc_response:
-    #         if "result" in rpc_response:
-    #             result = rpc_response["result"]
-    #             if isinstance(result, dict) and "content" in result:
-    #                 rpc_result_text = result["content"]
-    #             else:
-    #                 rpc_result_text = json.dumps(result, ensure_ascii=False)
-    #         elif "error" in rpc_response:
-    #             rpc_result_text = f"工具执行出错：{rpc_response['error']['message']}"
-
-    #     system_content = f"工具调用已完成，结果为：{rpc_result_text}"
-    #     return {"assistant": assistant_content, "system": system_content}
     def _format_tool_response_for_history(self, response, rpc_response):
         response = utils.extract_json_from_text(response)
         if isinstance(response, dict):
