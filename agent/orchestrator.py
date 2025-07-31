@@ -3,7 +3,6 @@ from agent.rpc_handler import handle_rpc_request
 from rpc_registry import METHOD_FLAGS
 from utils import utils
 import logging
-from config import PROVIDER
 from common.error_codes import ErrorCode
 
 logger = logging.getLogger(__name__)
@@ -84,7 +83,7 @@ class AgentOrchestrator:
                     if needs_nlg:
                         tool_result = rpc_response.get('result', {})
                         formatted = self._format_tool_response_for_history(response, rpc_response)
-                        if PROVIDER == "gemini":
+                        if self.agent.provider == "gemini":
                             current_history += [
                                 {"role": "assistant", "content": formatted["assistant"]},
                                 {"role": "assistant", "content": formatted["system"]}
@@ -103,7 +102,7 @@ class AgentOrchestrator:
                         break
 
                     formatted = self._format_tool_response_for_history(response, rpc_response)
-                    if PROVIDER == "gemini":
+                    if self.agent.provider == "gemini":
                         current_history += [
                             {"role": "assistant", "content": formatted["assistant"]},
                             {"role": "assistant", "content": formatted["system"]}

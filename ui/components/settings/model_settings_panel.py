@@ -128,8 +128,18 @@ class ModelSettingsPanel(QWidget):
         self.update_model_info()
 
     def update_model_info(self):
-        model_name = self.model_combo.currentText()
+        index = self.model_combo.currentIndex()
+        if index < 0:
+            return
+
+        # 取真实值（模型名）
+        model_name = self.model_combo.itemData(index)
+
         try:
+            # 推荐直接用 set_current_model
+            self.config_service.set_current_model(model_name)
+
+            # 加载模型配置
             model_config = self.config_service.get_model_config(model_name) or {}
             self.model_name_input.setText(model_name)
             self.provider_input.setText(model_config.get('provider', ''))
@@ -137,8 +147,9 @@ class ModelSettingsPanel(QWidget):
             self.api_key_input.setText(model_config.get('api_key', ''))
             self.base_url_input.setText(model_config.get('base_url', ''))
             self.update_model_card(model_name, model_config)
+
         except Exception as e:
-            self.show_error("更新模型信息失败", e)
+                self.show_error("更新模型信息失败", e)
 
     def create_model_card(self):
         card = QFrame()
