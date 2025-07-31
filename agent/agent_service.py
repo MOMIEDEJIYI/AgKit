@@ -134,3 +134,11 @@ class AgentService:
             else:
                 new_session = self.manager.create_session("你是遵守 JSON-RPC 2.0 协议的智能助手")
                 self.manager.switch_session(new_session)
+
+    def switch_model(self, model_name: str):
+        """切换当前模型并重载 agent 实例"""
+        config = ConfigService()
+        config.set_current_model(model_name)
+        agent_config = config.get_model_config(model_name)
+        self.agent = Agent(agent_config)
+        self.orchestrator = AgentOrchestrator(self.agent)
