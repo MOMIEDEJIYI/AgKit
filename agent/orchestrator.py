@@ -1,9 +1,9 @@
 import json
 from agent.rpc_handler import handle_rpc_request
-from rpc_registry import METHOD_FLAGS
 from utils import utils
 import logging
 from common.error_codes import ErrorCode
+from agent.rpc_registry import METHOD_META, PACKAGE_FLAGS
 
 logger = logging.getLogger(__name__)
 
@@ -55,7 +55,19 @@ class AgentOrchestrator:
 
                 if isinstance(rpc_obj, dict) and "method" in rpc_obj:
                     method_name = rpc_obj.get("method")
-                    method_flags = METHOD_FLAGS.get(method_name, {})
+
+                    meta = METHOD_META.get(method_name)
+                    if meta:
+                        package = meta.get("package")
+                        pkg_enabled = PACKAGE_FLAGS.get(package, {}).get("enabled", True)
+                        method_enabled = meta.get("enabled", True)
+                        if not pkg_enabled or not method_enabled:
+                            print(f"方法或包被禁用，跳过执行: {method_name}")
+                            break
+                        method_flags = meta
+                    else:
+                        method_flags = {}
+
                     print("收到 JSON-RPC 请求： %s", json.dumps(rpc_obj, ensure_ascii=False))
                     rpc_response = handle_rpc_request(json.dumps(rpc_obj))
                     if rpc_response is None:

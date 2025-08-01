@@ -1,5 +1,5 @@
 import os
-from rpc_registry import register_method
+from agent.rpc_registry import register_method
 from agent.models.rpc_base import RpcResultBase
 from common.error_codes import ErrorCode
 

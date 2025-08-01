@@ -3,6 +3,8 @@ from agent.manager import ConversationManager
 from agent.orchestrator import AgentOrchestrator
 from agent.agent import Agent
 from utils import utils
+from utils.event_bus import event_bus
+from agent.rpc_registry import load_snapshot
 from config_service import ConfigService
 import logging
 
@@ -12,7 +14,9 @@ class AgentService:
         self._cancel_flag = False
         config = ConfigService()
         conversation_cfg = config.get_section("conversation") or {}
-
+        # 订阅更新事件
+        event_bus.subscribe("methods_updated", self.reload_methods)
+        
         user_id = conversation_cfg.get("user_id", user_id)
 
         history_dir_config = conversation_cfg.get("history_dir", f"conversation/history/{user_id}")
@@ -35,7 +39,10 @@ class AgentService:
     def stop(self):
         logger.info("AgentService: 设置取消标志")
         self._cancel_flag = True
-
+    def reload_methods(self):
+        print("AgentService: 收到 methods_updated 事件，重新加载方法配置")
+        load_snapshot()
+        self.agent.refresh_available_methods()
     def is_cancelled(self):
         return self._cancel_flag
 

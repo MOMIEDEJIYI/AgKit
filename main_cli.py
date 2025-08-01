@@ -1,5 +1,5 @@
 # main_api.py
-from rpc_registry import init_registry
+from agent.rpc_registry import init_registry
 from api.api_server import create_api_app
 import uvicorn
 import socket

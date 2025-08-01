@@ -1,7 +1,7 @@
 # agent/agent.py
 
 from openai import OpenAI
-from rpc_registry import METHOD_REGISTRY, METHOD_DOCS
+from agent.rpc_registry import METHOD_REGISTRY, METHOD_META, PACKAGE_FLAGS
 import logging
 from agent.models.gemini_client import GeminiClient
 
@@ -21,6 +21,25 @@ class Agent:
             self.client = GeminiClient(api_key=self.api_key, model=self.model, endpoint=self.base_url)
         else:
             raise ValueError(f"不支持的 PROVIDER: {self.provider}")
+        # 过滤启用的包和方法
+        self._available_methods = []
+        self._method_docs = {}
+
+        for method_name in METHOD_REGISTRY.keys():
+            meta = METHOD_META.get(method_name)
+            if not meta:
+                continue
+            package = meta.get("package")
+            pkg_enabled = PACKAGE_FLAGS.get(package, {}).get("enabled", True)
+            method_enabled = meta.get("enabled", True)
+            if pkg_enabled and method_enabled:
+                self._available_methods.append(method_name)
+                # 从 METHOD_META 里取参数说明和描述，构造文档结构
+                self._method_docs[method_name] = {
+                    "description": meta.get("description", ""),
+                    "params": meta.get("params", {})
+                }
+
         self.system_prompt = """
 你是一个严格遵守 JSON-RPC 2.0 协议的智能助手。
 
@@ -121,18 +140,30 @@ class Agent:
 }
 请严格遵守上述规范，始终返回结构正确、字段齐全的纯 JSON。
 """
-        self._available_methods = list(METHOD_REGISTRY.keys())
-        self._method_docs = METHOD_DOCS  # 参数说明字典
     @property
     def available_methods(self):
-        # 动态返回当前所有注册的JSON-RPC方法名列表
-        return list(METHOD_REGISTRY.keys())
+        return self._available_methods
+
     @property
     def method_docs(self):
         return self._method_docs
+
     @available_methods.setter
     def available_methods(self, methods):
         self._available_methods = methods
+    def refresh_available_methods(self):
+        self._available_methods = []
+        self._method_docs = {}
+        for method_name, meta in METHOD_META.items():
+            pkg_enabled = PACKAGE_FLAGS.get(meta["package"], {}).get("enabled", True)
+            if pkg_enabled and meta.get("enabled", True) and method_name in METHOD_REGISTRY:
+                self._available_methods.append(method_name)
+                # 同时更新方法文档
+                self._method_docs[method_name] = {
+                    "description": meta.get("description", ""),
+                    "params": meta.get("params", {})
+                }
+
     def ask(self, history_messages: list[dict], known_methods=None, extra_prompt=None) -> str:
       logger.info(f"agent ask")
       print("请求 URL:", self.base_url)
@@ -158,12 +189,10 @@ class Agent:
           raise ValueError(f"未知的 provider: {self.provider}")
 
     def ask_stream(self, history_messages: list[dict], known_methods=None, extra_prompt=None, check_cancel=lambda: False) -> str:
-      logger.info(f"agent ask_stream")
       print("请求 URL:", self.base_url)
-
       system_prompt = self._build_system_prompt(known_methods, extra_prompt)
       messages = self._build_messages(history_messages, system_prompt)
-    #   print("messages", messages)
+      print("messages", messages)
       if self.provider == "gemini":
           try:
               repsonse = self.client.chat(messages)

@@ -1,19 +1,18 @@
 import json
 from utils import utils
-from rpc_registry import METHOD_REGISTRY, METHOD_FLAGS
 from agent.models.rpc_base import RpcResponse
 from common.error_codes import ErrorCode
+from agent.rpc_registry import METHOD_REGISTRY, METHOD_META, PACKAGE_FLAGS
 
 def handle_rpc_request(raw_text: str) -> dict | None:
     try:
         json_str = utils.extract_json_from_text(raw_text)
         parsed = json.loads(json_str)
 
-        # 解析 JSON-RPC 请求体
         request = parsed["jsonrpc"] if isinstance(parsed.get("jsonrpc"), dict) else parsed
 
         if "method" not in request:
-            return None  # 非请求（可能是响应）
+            return None
 
         if request.get("jsonrpc") != "2.0":
             raise ValueError("无效的 JSON-RPC 请求")
@@ -23,7 +22,8 @@ def handle_rpc_request(raw_text: str) -> dict | None:
         request_id = request.get("id")
 
         handler = METHOD_REGISTRY.get(method)
-        if not handler:
+        meta = METHOD_META.get(method)
+        if not handler or not meta:
             return RpcResponse(
                 error={
                     "code": ErrorCode.UNKNOWN_METHOD["code"],
@@ -32,13 +32,23 @@ def handle_rpc_request(raw_text: str) -> dict | None:
                 id=request_id
             ).to_dict()
 
-        # ==== 参数校验 ====
-        param_desc = getattr(handler, "_rpc_param_desc", {})
+        # 判断包和方法是否启用
+        package = meta.get("package")
+        pkg_enabled = PACKAGE_FLAGS.get(package, {}).get("enabled", True)
+        if not pkg_enabled or not meta.get("enabled", True):
+            return RpcResponse(
+                error={
+                    "code": ErrorCode.UNKNOWN_METHOD["code"],
+                    "message": f"方法被禁用: {method}"
+                },
+                id=request_id
+            ).to_dict()
+
+        param_desc = meta.get("params", {})
         missing_params = [
             key for key in param_desc
             if key not in params or params[key] in [None, "", []]
         ]
-
         if missing_params:
             return RpcResponse(
                 error={
@@ -50,7 +60,6 @@ def handle_rpc_request(raw_text: str) -> dict | None:
                 id=request_id
             ).to_dict()
 
-        # ==== 执行方法 ====
         if isinstance(params, dict):
             result = handler(params)
         elif isinstance(params, list):
@@ -58,16 +67,13 @@ def handle_rpc_request(raw_text: str) -> dict | None:
         else:
             result = handler(params)
 
-        # ==== 返回结构检查 ====
-        tool_result_wrap = METHOD_FLAGS.get(method, {}).get("tool_result_wrap", False)
-
+        tool_result_wrap = meta.get("tool_result_wrap", False)
         if not tool_result_wrap:
             if not isinstance(result, dict):
                 raise ValueError(f"工具函数返回值必须是 dict，当前类型: {type(result)}")
             if "content" not in result or "done" not in result:
                 raise ValueError("工具函数返回的结果必须包含 'content' 和 'done' 字段")
 
-            # 工具返回失败
             if not result.get("success", True):
                 return RpcResponse(
                     error={
@@ -78,7 +84,7 @@ def handle_rpc_request(raw_text: str) -> dict | None:
                 ).to_dict()
 
         if request_id is None:
-            return None  # Notification 请求无响应
+            return None
 
         return RpcResponse(result=result, id=request_id).to_dict()
 

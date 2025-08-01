@@ -5,8 +5,8 @@ import sys
 import inspect
 
 METHOD_REGISTRY = {}
-METHOD_DOCS = {}  # 存参数说明
-METHOD_FLAGS = {}
+METHOD_META = {}      # 方法元信息：描述、参数、enabled、package
+PACKAGE_FLAGS = {}    # 包级开关：{"pkg": {"enabled": True/False}}
 
 if getattr(sys, "frozen", False):
     # 打包模式：获取 exe 所在目录
@@ -26,17 +26,26 @@ if base_dir not in sys.path:
     sys.path.insert(0, base_dir)
 
 
-def register_method(name, param_desc=None, description=None, **flags):
+def register_method(name, param_desc=None, description=None, enabled=True, **flags):
     def decorator(func):
+        if "." not in name:
+            raise ValueError(f"注册的方法名 '{name}' 缺少包名前缀")
+        package = name.split(".")[0]
+
         sig = inspect.signature(func)
         if len(sig.parameters) == 0:
-            raise ValueError(f"注册的方法 {name} 必须至少接收一个参数 (params)，不使用请设置为params=None")
+            raise ValueError(f"注册的方法 {name} 必须至少接收一个参数")
+
         METHOD_REGISTRY[name] = func
-        METHOD_DOCS[name] = {
+        METHOD_META[name] = {
+            "package": package,
             "description": description or "",
-            "params": param_desc or {}
+            "params": param_desc or {},
+            "enabled": enabled,
+            **flags
         }
-        METHOD_FLAGS[name] = flags
+        if package not in PACKAGE_FLAGS:
+            PACKAGE_FLAGS[package] = {"enabled": True}
         return func
     return decorator
 
@@ -45,9 +54,8 @@ def save_snapshot():
     os.makedirs(os.path.dirname(SNAPSHOT_PATH), exist_ok=True)
 
     missing_desc = []
-    for name in METHOD_REGISTRY:
-        doc = METHOD_DOCS.get(name)
-        if not doc or not doc.get("description", "").strip():
+    for name, meta in METHOD_META.items():
+        if not meta.get("description", "").strip():
             missing_desc.append(name)
 
     if missing_desc:
@@ -58,8 +66,8 @@ def save_snapshot():
         sys.exit(1)
 
     snapshot = {
-        "methods": list(METHOD_REGISTRY.keys()),
-        "docs": METHOD_DOCS
+        "packages": PACKAGE_FLAGS,
+        "methods": METHOD_META
     }
     with open(SNAPSHOT_PATH, "w", encoding="utf-8") as f:
         json.dump(snapshot, f, ensure_ascii=False, indent=2)
@@ -79,24 +87,23 @@ def infer_module_from_method(method_name):
 
 
 def load_snapshot():
-    global METHOD_REGISTRY, METHOD_DOCS
+    global METHOD_META, PACKAGE_FLAGS
     if not os.path.exists(SNAPSHOT_PATH):
         raise FileNotFoundError(f"快照文件不存在：{SNAPSHOT_PATH}")
     with open(SNAPSHOT_PATH, "r", encoding="utf-8") as f:
         snapshot = json.load(f)
 
-    METHOD_DOCS.clear()
-    METHOD_REGISTRY.clear()
-    METHOD_DOCS.update(snapshot.get("docs", {}))
+    METHOD_META.clear()
+    PACKAGE_FLAGS.clear()
 
-    for method_name in snapshot.get("methods", []):
-        module_name = infer_module_from_method(method_name)
-        try:
-            importlib.import_module(module_name)
-        except Exception as e:
-            print(f"加载模块 {module_name} 失败: {e}")
+    # 从快照加载
+    packages = snapshot.get("packages", {})
+    methods = snapshot.get("methods", {})
 
-    print(f"从快照加载了 {len(snapshot.get('methods', []))} 个方法")
+    PACKAGE_FLAGS.update(packages)
+    METHOD_META.update(methods)
+
+    print(f"从快照加载了 {len(METHOD_META)} 个方法")
 
 
 def init_registry():
@@ -121,6 +128,37 @@ def init_registry():
     save_snapshot()
     print(f"已加载 {len(METHOD_REGISTRY)} 个方法")
 
+
 def is_dev_mode():
-    import sys
     return not getattr(sys, "frozen", False)
+
+
+# ==== 开关控制 API ====
+from utils.event_bus import event_bus
+def disable_method(method_name):
+    if method_name in METHOD_META:
+        METHOD_META[method_name]["enabled"] = False
+        save_snapshot()
+        event_bus.publish("methods_updated", source="registry", method=method_name, enabled=False)
+
+def enable_method(method_name):
+    if method_name in METHOD_META:
+        METHOD_META[method_name]["enabled"] = True
+        save_snapshot()
+        event_bus.publish("methods_updated", source="registry", method=method_name, enabled=True)
+
+def disable_package(package_name):
+    PACKAGE_FLAGS[package_name] = {"enabled": False}
+    for m, meta in METHOD_META.items():
+        if meta["package"] == package_name:
+            meta["enabled"] = False
+    save_snapshot()
+    event_bus.publish("methods_updated", source="registry", package=package_name, enabled=False)
+
+def enable_package(package_name):
+    PACKAGE_FLAGS[package_name] = {"enabled": True}
+    for m, meta in METHOD_META.items():
+        if meta["package"] == package_name:
+            meta["enabled"] = True
+    save_snapshot()
+    event_bus.publish("methods_updated", source="registry", package=package_name, enabled=True)

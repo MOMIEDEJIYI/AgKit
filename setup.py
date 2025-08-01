@@ -1,5 +1,5 @@
 from cx_Freeze import setup, Executable
-from rpc_registry import init_registry
+from agent.rpc_registry import init_registry
 import os
 
 # 预先生成快照文件

@@ -2,7 +2,7 @@
 import sys
 from PyQt5.QtWidgets import QApplication
 from ui.chat_window import ChatWindow
-from rpc_registry import init_registry
+from agent.rpc_registry import init_registry
 
 if __name__ == "__main__":
     init_registry()

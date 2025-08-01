@@ -1,7 +1,7 @@
 import requests
 import httpx
 import asyncio
-from rpc_registry import register_method
+from agent.rpc_registry import register_method
 
 # 同步 GET 请求
 @register_method(

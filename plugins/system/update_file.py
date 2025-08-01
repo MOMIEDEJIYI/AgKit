@@ -1,5 +1,5 @@
 import os
-from rpc_registry import register_method
+from agent.rpc_registry import register_method
 from plugins.system.create_file import create_file
 
 @register_method(

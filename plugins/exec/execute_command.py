@@ -1,5 +1,5 @@
 import subprocess
-from rpc_registry import register_method
+from agent.rpc_registry import register_method
 from agent.models.rpc_base import RpcResultBase
 from plugins.system.error_codes import ErrorCode
 

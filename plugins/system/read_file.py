@@ -1,6 +1,6 @@
 import os
 import re
-from rpc_registry import register_method
+from agent.rpc_registry import register_method
 from agent.models.rpc_base import RpcResultBase
 
 @register_method(
