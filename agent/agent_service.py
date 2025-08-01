@@ -39,8 +39,8 @@ class AgentService:
     def stop(self):
         logger.info("AgentService: 设置取消标志")
         self._cancel_flag = True
-    def reload_methods(self):
-        print("AgentService: 收到 methods_updated 事件，重新加载方法配置")
+    def reload_methods(self, *args, **kwargs):
+        print("AgentService: 收到 methods_updated 事件，重新加载方法配置，携带参数:", args, kwargs)
         load_snapshot()
         self.agent.refresh_available_methods()
     def is_cancelled(self):

@@ -115,3 +115,14 @@ QListWidget#packageList::item:selected {
     margin-top: 5px;
     white-space: pre-wrap;
 }
+QPushButton#packageToggleBtn {
+    /* 按钮样式 */
+    background-color: #e2e8f0;
+    border-radius: 4px;
+}
+QPushButton#packageToggleBtn:hover {
+    background-color: #cbd5e0;
+}
+QLabel#packageStatus {
+    font-weight: 600;
+}

@@ -1,11 +1,12 @@
 from PyQt5.QtWidgets import (
     QWidget, QVBoxLayout, QLabel, QScrollArea, QFrame, QListWidget, QListWidgetItem,
-    QHBoxLayout
+    QHBoxLayout, QPushButton, QSizePolicy
 )
 from PyQt5.QtCore import Qt
 import os
 import json
 from utils import utils
+from agent.rpc_registry import enable_method, disable_method, enable_package, disable_package
 
 
 class MethodSnapshotPanel(QWidget):
@@ -120,28 +121,52 @@ class MethodSnapshotPanel(QWidget):
             self.right_layout.addWidget(no_pkg_label)
 
     def _create_package_widget(self, pkg_name, methods):
-        """构建某个包的右侧 UI 容器"""
         pkg_widget = QWidget()
         pkg_layout = QVBoxLayout(pkg_widget)
         pkg_layout.setContentsMargins(0, 0, 0, 0)
         pkg_layout.setSpacing(15)
 
-        # 包头
         header_widget = QWidget()
         header_layout = QHBoxLayout(header_widget)
         header_layout.setContentsMargins(0, 0, 0, 0)
         header_layout.setSpacing(10)
 
+        # 包名容器，保证换行
+        pkg_label_container = QWidget()
+        pkg_label_layout = QVBoxLayout(pkg_label_container)
+        pkg_label_layout.setContentsMargins(0, 0, 0, 0)
         pkg_label = QLabel(f"包: {pkg_name}")
         pkg_label.setObjectName("packageName")
+        pkg_label.setWordWrap(True)
+        pkg_label.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
+        pkg_label_layout.addWidget(pkg_label)
+
         all_disabled = all(not meta.get("enabled", True) for meta in methods.values())
         status_text = "已禁用" if all_disabled else "启用中"
         status_color = "#e53e3e" if all_disabled else "#38a169"
         status_label = QLabel(f"<span style='color:{status_color};'>{status_text}</span>")
         status_label.setObjectName("packageStatus")
 
-        header_layout.addWidget(pkg_label)
-        header_layout.addWidget(status_label)
+        toggle_btn = QPushButton("启用" if all_disabled else "禁用")
+        toggle_btn.setFixedWidth(60)
+
+        def on_toggle_package():
+            if toggle_btn.text() == "启用":
+                enable_package(pkg_name)
+                toggle_btn.setText("禁用")
+                status_label.setText("<span style='color:#38a169;'>启用中</span>")
+                self._refresh_package_methods(pkg_name, True)
+            else:
+                disable_package(pkg_name)
+                toggle_btn.setText("启用")
+                status_label.setText("<span style='color:#e53e3e;'>已禁用</span>")
+                self._refresh_package_methods(pkg_name, False)
+
+        toggle_btn.clicked.connect(on_toggle_package)
+
+        header_layout.addWidget(pkg_label_container, 1)
+        header_layout.addWidget(status_label, 0)
+        header_layout.addWidget(toggle_btn, 0)
         header_layout.addStretch()
         pkg_layout.addWidget(header_widget)
 
@@ -149,14 +174,13 @@ class MethodSnapshotPanel(QWidget):
         for method_name, meta in sorted(methods.items()):
             pkg_layout.addWidget(self._create_method_card(method_name, meta))
 
-        pkg_layout.addStretch()  # 保证顶部对齐
+        pkg_layout.addStretch()
         return pkg_widget
 
     def _create_method_card(self, method_name, meta):
-        """构建方法卡片"""
         method_card = QWidget()
         method_card.setObjectName("methodCard")
-        method_card.setProperty("class", "methodCard")  # 动态属性，配合QSS类选择器
+        method_card.setProperty("class", "methodCard")
         method_card_layout = QVBoxLayout(method_card)
         method_card_layout.setContentsMargins(10, 10, 10, 10)
         method_card_layout.setSpacing(5)
@@ -165,33 +189,65 @@ class MethodSnapshotPanel(QWidget):
         description = meta.get("description", "无描述")
         params = meta.get("params", {})
 
-        # 方法名 + 状态
+        # 方法名 + 状态 + 开关按钮
         method_header = QWidget()
         method_header_layout = QHBoxLayout(method_header)
         method_header_layout.setContentsMargins(0, 0, 0, 0)
         method_header_layout.setSpacing(10)
 
+        # 方法名容器，保证换行
+        method_label_container = QWidget()
+        method_label_layout = QVBoxLayout(method_label_container)
+        method_label_layout.setContentsMargins(0, 0, 0, 0)
         method_label = QLabel(method_name)
         method_label.setObjectName("methodName")
+        method_label.setWordWrap(True)
+        method_label.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
+        method_label.setTextInteractionFlags(Qt.TextSelectableByMouse)
         if not enabled:
             method_label.setStyleSheet("color: gray;")
+        method_label_layout.addWidget(method_label)
 
         method_status = QLabel("启用中" if enabled else "已禁用")
         method_status.setObjectName("methodStatus")
         method_status.setStyleSheet("color: #38a169;" if enabled else "color: #e53e3e;")
 
-        method_header_layout.addWidget(method_label)
-        method_header_layout.addWidget(method_status)
-        method_header_layout.addStretch()
+        toggle_btn = QPushButton("禁用" if enabled else "启用")
+        toggle_btn.setFixedWidth(60)
+
+        def on_toggle():
+            if toggle_btn.text() == "启用":
+                enable_method(method_name)
+                toggle_btn.setText("禁用")
+                method_status.setText("启用中")
+                method_status.setStyleSheet("color: #38a169;")
+                method_label.setStyleSheet("")
+            else:
+                disable_method(method_name)
+                toggle_btn.setText("启用")
+                method_status.setText("已禁用")
+                method_status.setStyleSheet("color: #e53e3e;")
+                method_label.setStyleSheet("color: gray;")
+
+        toggle_btn.clicked.connect(on_toggle)
+
+        method_header_layout.addWidget(method_label_container, 1)
+        method_header_layout.addWidget(method_status, 0)
+        method_header_layout.addWidget(toggle_btn, 0)
         method_card_layout.addWidget(method_header)
 
-        # 描述
+        # 描述容器，保证换行
+        desc_container = QWidget()
+        desc_layout = QVBoxLayout(desc_container)
+        desc_layout.setContentsMargins(0, 0, 0, 0)
         desc_label = QLabel(f"描述: {description}")
         desc_label.setObjectName("description")
         desc_label.setWordWrap(True)
-        method_card_layout.addWidget(desc_label)
+        desc_label.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
+        desc_layout.addWidget(desc_label)
+        method_card_layout.addWidget(desc_container)
 
-        # 参数
+        # 参数（多行）
         if params:
             param_title = QLabel("参数:")
             param_title.setObjectName("paramTitle")
@@ -201,9 +257,43 @@ class MethodSnapshotPanel(QWidget):
             params_label = QLabel("\n".join(param_lines))
             params_label.setObjectName("params")
             params_label.setWordWrap(True)
+            params_label.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
             method_card_layout.addWidget(params_label)
 
         return method_card
+
+
+    def _refresh_package_methods(self, pkg_name, enabled):
+        if pkg_name not in self.package_widgets:
+            return
+        pkg_widget = self.package_widgets[pkg_name]
+        # 遍历包内所有方法卡片，更新按钮和状态
+        for i in range(pkg_widget.layout().count()):
+            item = pkg_widget.layout().itemAt(i)
+            if item is None:
+                continue
+            widget = item.widget()
+            if widget is None:
+                continue
+            # 找到 methodCard（方法卡片）
+            if widget.objectName() == "methodCard":
+                # 找到方法名、状态标签和按钮
+                method_label = widget.findChild(QLabel, "methodName")
+                method_label.setWordWrap(True)
+                method_status = widget.findChild(QLabel, "methodStatus")
+                toggle_btn = widget.findChild(QPushButton)
+                if not method_label or not method_status or not toggle_btn:
+                    continue
+                if enabled:
+                    method_status.setText("启用中")
+                    method_status.setStyleSheet("color: #38a169;")
+                    toggle_btn.setText("禁用")
+                    method_label.setStyleSheet("")
+                else:
+                    method_status.setText("已禁用")
+                    method_status.setStyleSheet("color: #e53e3e;")
+                    toggle_btn.setText("启用")
+                    method_label.setStyleSheet("color: gray;")
 
     def on_package_selected(self, current: QListWidgetItem, previous: QListWidgetItem):
         if not current:
