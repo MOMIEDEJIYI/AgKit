@@ -75,7 +75,8 @@ class ModelSettingsPanel(QWidget):
         self.model_combo = NoWheelComboBox()
         self.model_combo.setObjectName("styledCombo")
         self.model_combo.addItems(self.get_model_keys())
-        self.model_combo.currentTextChanged.connect(self.update_model_info)
+        # 用户切换时才更新配置
+        self.model_combo.currentTextChanged.connect(lambda _: self.update_model_info(from_user=True))
 
         model_select_layout.addWidget(model_label, 1)
         model_select_layout.addWidget(self.model_combo, 3)
@@ -125,21 +126,32 @@ class ModelSettingsPanel(QWidget):
 
         card_layout.addLayout(content_layout)
         main_layout.addWidget(card_container)
-        self.update_model_info()
 
-    def update_model_info(self):
+        # === 初始化时用 current_model 来设置 ===
+        current_model = self.config_service.get_current_model()
+        if current_model in self.get_model_keys():
+            self.model_combo.setCurrentText(current_model)
+        elif self.model_combo.count() > 0:
+            # fallback：配置里没有就用第一个
+            current_model = self.model_combo.itemText(0)
+            self.config_service.set_current_model(current_model)
+            self.model_combo.setCurrentText(current_model)
+
+        # 初始化时只加载数据，不写回配置
+        self.update_model_info(from_user=False)
+
+    def update_model_info(self, from_user=False):
         index = self.model_combo.currentIndex()
         if index < 0:
             return
 
-        # 取真实值（模型名）
-        model_name = self.model_combo.itemData(index)
+        model_name = self.model_combo.itemText(index)  # 用 itemText 更直观
 
         try:
-            # 推荐直接用 set_current_model
-            self.config_service.set_current_model(model_name)
+            # ⚠️ 只有用户切换时才写回配置
+            if from_user:
+                self.config_service.set_current_model(model_name)
 
-            # 加载模型配置
             model_config = self.config_service.get_model_config(model_name) or {}
             self.model_name_input.setText(model_name)
             self.provider_input.setText(model_config.get('provider', ''))
@@ -149,7 +161,7 @@ class ModelSettingsPanel(QWidget):
             self.update_model_card(model_name, model_config)
 
         except Exception as e:
-                self.show_error("更新模型信息失败", e)
+            self.show_error("更新模型信息失败", e)
 
     def create_model_card(self):
         card = QFrame()
