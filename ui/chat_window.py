@@ -9,7 +9,7 @@ from PyQt5.QtCore import Qt, QPoint, QPropertyAnimation, QRect, QEasingCurve
 from utils import utils
 from ui.components.navbar import NavBar
 from ui.components.chat_panel import ChatPanel
-from ui.components.request_panel import RequestPanel
+from ui.components.method_snapshot import MethodSnapshotPanel
 from ui.components.title_bar import TitleBar
 from ui.components.settings.settings_panel import SettingsPanel  # 你自己的设置页
 
@@ -42,12 +42,12 @@ class ChatWindow(QMainWindow):
         self.content_area = QStackedWidget()
         self.content_area.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         self.chat_panel = ChatPanel()
-        self.request_panel = RequestPanel()
+        self.method_snapshot_panel = MethodSnapshotPanel()
         self.settings_panel = SettingsPanel()
 
         self.pages = {
             "chat": self.chat_panel,
-            "request": self.request_panel,
+            "method_snapshot": self.method_snapshot_panel,
             "settings": self.settings_panel
         }
         for widget in self.pages.values():

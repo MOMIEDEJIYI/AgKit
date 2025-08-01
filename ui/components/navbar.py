@@ -36,7 +36,7 @@ class NavBar(QWidget):
         center_widget = QWidget()
         center_layout = QVBoxLayout(center_widget)
         center_layout.setContentsMargins(0, 0, 0, 0)
-        center_layout.setSpacing(16)
+        center_layout.setSpacing(5)
 
         # 折叠按钮区域
         top_layout = QHBoxLayout()
@@ -60,7 +60,7 @@ class NavBar(QWidget):
 
         # 添加主按钮
         self.chat_btn = IconTextButton("💬", "会话")
-        self.req_btn = IconTextButton("⚙️", "请求")
+        self.req_btn = IconTextButton("⚙️", "快照")
         self.custom_buttons = [self.chat_btn, self.req_btn]
 
         for btn in self.custom_buttons:
@@ -125,7 +125,7 @@ class NavBar(QWidget):
             if btn == self.chat_btn:
                 self.on_nav_click("chat")
             elif btn == self.req_btn:
-                self.on_nav_click("request")
+                self.on_nav_click("method_snapshot")
             elif btn == self.settings_btn:
                 self.on_nav_click("settings")
 
