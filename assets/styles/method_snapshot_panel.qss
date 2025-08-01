@@ -1,0 +1,117 @@
+/* 全局字体 */
+* {
+    font-family: 'Microsoft YaHei';
+}
+
+/* 整体卡片容器 */
+#modelCardContainer {
+    background-color: #ffffff;
+    border-radius: 8px;
+    padding: 15px;
+}
+
+/* 卡片标题 */
+#cardTitle {
+    font-size: 18px;
+    font-weight: 600;
+    color: #2d3748;
+    margin-bottom: 10px;
+}
+
+/* 分割线 */
+#divider {
+    border: 1px solid #edf2f7;
+    margin: 0;
+}
+
+/* 包列表 */
+QListWidget#packageList {
+    font-size: 14px;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    background-color: #fafafa;
+}
+
+QListWidget#packageList::item {
+    padding: 6px 9px;
+    border-radius: 6px;
+}
+
+QListWidget#packageList::item:hover {
+    background-color: #f5f5f5;
+}
+
+QListWidget#packageList::item:selected {
+    background-color: #dadada;
+    color: #2b6cb0;
+    font-weight: 700;
+}
+
+/* 右侧容器样式 */
+#methodSnapshotRightContainer {
+    background-color: #fafafa;
+    border-radius: 6px;
+}
+
+/* 方法卡片样式 */
+.methodCard {
+    background-color: white;
+    border-radius: 6px;
+    border: 1px solid #e2e8f0;
+    padding: 15px;
+}
+
+/* 包名样式 */
+#packageName {
+    font-size: 16px;
+    font-weight: 700;
+    color: #2c5282;
+}
+
+/* 包状态 */
+#packageStatus {
+    font-size: 14px;
+    color: #718096;
+}
+
+/* 方法名称 */
+#methodName {
+    font-size: 15px;
+    font-weight: 600;
+    color: #2b6cb0;
+}
+
+/* 方法状态 */
+#methodStatus {
+    font-size: 13px;
+    font-weight: 500;
+}
+
+/* 描述文本 */
+#description {
+    font-size: 14px;
+    color: #4a5568;
+    margin-bottom: 8px;
+    line-height: 1.4;
+}
+
+/* 参数标题 */
+#paramTitle {
+    font-size: 13px;
+    color: #718096;
+    margin-top: 8px;
+    margin-bottom: 5px;
+    font-weight: 500;
+}
+
+/* 参数列表 */
+#params {
+    font-size: 13px;
+    color: #4a5568;
+    background-color: #f7fafc;
+    border-left: 3px solid #cbd5e0;
+    padding: 8px 12px;
+    border-radius: 4px;
+    margin-top: 5px;
+    white-space: pre-wrap;
+}

@@ -1,6 +1,6 @@
 from PyQt5.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QPushButton,
-    QButtonGroup, QSizePolicy
+    QButtonGroup, QSizePolicy, QFrame
 )
 from PyQt5.QtCore import Qt, QPropertyAnimation
 import os
@@ -11,7 +11,6 @@ from ui.components.base.icon_text_button import IconTextButton
 class NavBar(QWidget):
     def __init__(self, parent=None, on_nav_click=None):
         super().__init__(parent)
-        self.setObjectName("navbar")
         self.on_nav_click = on_nav_click
 
         # 展开/折叠宽度
@@ -27,8 +26,15 @@ class NavBar(QWidget):
         self.setAttribute(Qt.WA_TranslucentBackground)
 
     def _init_ui(self):
-        # 主容器布局（垂直）
-        main_layout = QVBoxLayout(self)
+        # === 外层加一个 HBoxLayout，用来放 NavBar + 分割线 ===
+        outer_layout = QHBoxLayout(self)
+        outer_layout.setContentsMargins(0, 0, 0, 0)
+        outer_layout.setSpacing(0)
+
+        # 主容器
+        nav_widget = QWidget()
+        nav_widget.setObjectName("navbar")
+        main_layout = QVBoxLayout(nav_widget)
         main_layout.setContentsMargins(12, 12, 12, 12)
         main_layout.setSpacing(0)
 
@@ -91,7 +97,17 @@ class NavBar(QWidget):
         # 全部按钮收集
         self.custom_buttons.append(self.settings_btn)
 
-        self.setLayout(main_layout)
+        # === 分割线（竖直线）===
+        vline = QFrame()
+        vline.setFrameShape(QFrame.VLine)
+        vline.setFrameShadow(QFrame.Sunken)
+        vline.setObjectName("navbarDivider")
+
+        # 放到外层布局
+        outer_layout.addWidget(nav_widget)
+        outer_layout.addWidget(vline)
+
+        self.setLayout(outer_layout)
 
     def toggle_expand(self):
         """展开/折叠侧边栏"""

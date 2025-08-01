@@ -1,8 +1,10 @@
 
+* {
+    font-family: 'Microsoft YaHei';
+}
 /* 滚动区域样式 */
 #scrollContainer {
     background-color: #ffffff;
-    border-left: 1px solid #e2e8f0;
 }
 
 
