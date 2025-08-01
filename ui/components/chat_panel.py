@@ -31,6 +31,8 @@ class ChatPanel(QWidget):
         
         self.config = ConfigService()
 
+        self.list_font = QFont("Microsoft YaHei", 10)
+
         self.new_session_button = QPushButton("新聊天")
         self.new_session_button.setObjectName("new_session_button")
         self.new_session_button.clicked.connect(self.on_new_session)
@@ -42,7 +44,6 @@ class ChatPanel(QWidget):
 
         self.session_list = QListWidget()
         self.session_list.setObjectName("session_list")
-        # self.session_list.addItems(self.service.manager.list_sessions())
         font = QFont("Microsoft YaHei", 10)
         for session in self.service.manager.list_sessions():
             item = QListWidgetItem(session)
@@ -115,12 +116,6 @@ class ChatPanel(QWidget):
         self.load_history()
 
         current_file = self.service.manager.current_session["file"]
-        # current_file = self.service.manager.current_session["file"]
-        # for i in range(self.session_list.count()):
-        #     item = self.session_list.item(i)
-        #     if item.data(Qt.UserRole) == current_file:
-        #         self.session_list.setCurrentItem(item)
-        #         break
 
         items = self.session_list.findItems(current_file, Qt.MatchFlag.MatchExactly)
         if items:
@@ -202,7 +197,9 @@ class ChatPanel(QWidget):
 
         existing_items = self.session_list.findItems(file_name, Qt.MatchFlag.MatchExactly)
         if not existing_items:
-            self.session_list.addItem(file_name)
+            item = QListWidgetItem(file_name)
+            item.setFont(self.list_font)
+            self.session_list.addItem(item)
         self.service.manager.switch_session(file_name)
         self.load_history()
         # 选中刚创建的项
@@ -286,7 +283,7 @@ class ChatPanel(QWidget):
                     self.show_confirm_dialog(question, options, rpc_id)
                     return
         except Exception as e:
-            pass  # 非 JSON，忽略即可
+            pass  # 非 JSON，忽略
 
         self.load_history()  # 普通响应就刷新历史
 
@@ -353,7 +350,12 @@ class ChatPanel(QWidget):
         sessions = self.service.manager.list_sessions()
         print("剩余会话列表:", sessions)
 
-        self.session_list.addItems(sessions)
+        font = QFont(self.list_font)
+        for session in sessions:
+            item = QListWidgetItem(session)
+            item.setFont(font)
+            self.session_list.addItem(item)
+
 
         if sessions:
             first_session = sessions[0]
