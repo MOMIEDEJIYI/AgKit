@@ -7,6 +7,7 @@ from PyQt5.QtCore import Qt
 from config_service import ConfigService
 from ui.components.settings.model_settings_panel import ModelSettingsPanel
 from ui.components.settings.conversation_settings_panel import ConversationSettingsPanel
+from ui.components.settings.voice_settings_panel import VoiceSettingsPanel
 
 class SettingsPanel(QWidget):
     def __init__(self):
@@ -33,11 +34,17 @@ class SettingsPanel(QWidget):
 
         # 添加面板
         self.model_settings = ModelSettingsPanel()
-        self.conversation_settings = ConversationSettingsPanel()
         self.model_settings.setObjectName("modelSettingsCard")
-        self.conversation_settings.setObjectName("conversationSettingsCard")
         scroll_layout.addWidget(self.model_settings)
+
+        self.conversation_settings = ConversationSettingsPanel()
+        self.conversation_settings.setObjectName("conversationSettingsCard")
         scroll_layout.addWidget(self.conversation_settings)
+
+        self.voice_settings = VoiceSettingsPanel()
+        self.voice_settings.setObjectName("voiceSettingsCard")
+        scroll_layout.addWidget(self.voice_settings)
+        
         scroll_layout.addStretch()  # 增加底部空间
 
         # 设置容器到滚动区域

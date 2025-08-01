@@ -29,5 +29,8 @@
   "conversation": {
     "user_id": "default",
     "history_dir": "conversation/history/"
+  },
+  "voice": {
+    "path": "models/vosk-model-small-cn-0.22"
   }
 }

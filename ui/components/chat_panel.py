@@ -85,10 +85,11 @@ class ChatPanel(QWidget):
         self.cancel_button.setObjectName("cancel_button")
         self.cancel_button.setEnabled(False)
 
-        # 语音识别模型路径（你可以根据实际放置路径修改）
-        self.model_path = "models/vosk-model-small-cn-0.22"
+        # 语音识别模型路径
+        voice_cfg = self.config.get_section("voice")
+        model_path = voice_cfg.get("path", "models/vosk-model-small-cn-0.22")
         # 检查模型是否存在
-        if not os.path.exists(self.model_path) or not os.path.exists(os.path.join(self.model_path, "conf")):
+        if not os.path.exists(model_path) or not os.path.exists(os.path.join(model_path, "conf")):
             self.send_voice.setEnabled(False)
             self.send_voice.setToolTip("未检测到语音模型，请下载后放入 models 目录")
         else:
@@ -377,7 +378,7 @@ class ChatPanel(QWidget):
                 print("警告：新建的会话列表项没有找到")
 
     def recognize_voice_input(self):
-        self.send_voice.setText("🎤 录音中...")
+        self.send_voice.setText("录音中...")
         self.send_voice.setEnabled(False)
         QApplication.processEvents()
 

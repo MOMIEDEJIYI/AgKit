@@ -104,7 +104,7 @@ class ConversationSettingsPanel(QWidget):
     
     def _load_stylesheet(self):
         """加载样式文件"""
-        qss_path = utils.resource_path("assets/styles/settings/model_settings_panel.qss")
+        qss_path = utils.resource_path("assets/styles/settings/conversation_settings_panel.qss")
         if os.path.exists(qss_path):
             with open(qss_path, "r", encoding="utf-8") as f:
                 self.setStyleSheet(f.read())
