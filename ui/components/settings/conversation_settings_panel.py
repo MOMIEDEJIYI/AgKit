@@ -7,6 +7,10 @@ from config_service import ConfigService
 from utils import utils
 import os
 
+# 引入 PathPicker
+from ui.components.base.path_picker import PathPicker
+
+
 class ConversationSettingsPanel(QWidget):
     def __init__(self):
         super().__init__()
@@ -54,12 +58,16 @@ class ConversationSettingsPanel(QWidget):
         form_layout.setHorizontalSpacing(15)
         
         # 用户ID
-        self.user_id_input = QLineEdit(self.config_service.get_section("conversation").get("user_id", "default"))
+        self.user_id_input = QLineEdit(
+            self.config_service.get_section("conversation").get("user_id", "default")
+        )
         self.user_id_input.setObjectName("styledInput")
         
-        # 会话历史目录
-        self.history_dir_input = QLineEdit(self.config_service.get_section("conversation").get("history_dir", ""))
-        self.history_dir_input.setObjectName("styledInput")
+        # 会话历史目录（改成 PathPicker）
+        self.history_dir_input = PathPicker(
+            default_path=self.config_service.get_section("conversation").get("history_dir", ""),
+            mode="directory"
+        )
         
         # 添加表单行
         user_id_label = QLabel("用户ID:")
@@ -93,14 +101,28 @@ class ConversationSettingsPanel(QWidget):
     
     def save_settings(self):
         """保存会话设置"""
-        user_id = self.user_id_input.text()
-        history_dir = self.history_dir_input.text()
+        user_id = self.user_id_input.text().strip()
+        history_dir = self.history_dir_input.text().strip()  # PathPicker.text()
+
+        if not user_id:
+            QMessageBox.warning(self, "警告", "用户ID不能为空")
+            return
+        if not history_dir:
+            QMessageBox.warning(self, "警告", "请选择一个历史目录")
+            return
 
         # 保存会话配置
-        self.config_service.set_section("conversation", {"user_id": user_id, "history_dir": history_dir})
-        
-        # 显示成功消息
-        QMessageBox.information(self, "成功", "会话设置已保存!")
+        self.config_service.set_section("conversation", {
+            "user_id": user_id,
+            "history_dir": history_dir
+        })
+
+        # 提示
+        QMessageBox.information(
+            self,
+            "成功",
+            "会话设置已保存。\n\n⚠️ 修改将在下次启动时生效。"
+        )
     
     def _load_stylesheet(self):
         """加载样式文件"""

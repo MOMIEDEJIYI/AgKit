@@ -54,3 +54,12 @@ def process_assistant_content(raw_content: str) -> str:
     except Exception:
         # 解析失败，返回原文
         return raw_content
+
+def get_abs_path_from_config_path(config_path: str, base_dir: str = None) -> str:
+    if not config_path:
+        return ""
+    if os.path.isabs(config_path):
+        return config_path
+    if base_dir is None:
+        base_dir = os.getcwd()  # 或你项目的根目录
+    return os.path.abspath(os.path.join(base_dir, config_path))

@@ -87,7 +87,9 @@ class ChatPanel(QWidget):
 
         # 语音识别模型路径
         voice_cfg = self.config.get_section("voice")
-        model_path = voice_cfg.get("path", "models/vosk-model-small-cn-0.22")
+        model_rel_path = voice_cfg.get("path", "models/vosk-model-small-cn-0.22")
+        model_path = utils.get_abs_path_from_config_path(model_rel_path)
+
         # 检查模型是否存在
         if not os.path.exists(model_path) or not os.path.exists(os.path.join(model_path, "conf")):
             self.send_voice.setEnabled(False)
@@ -382,7 +384,10 @@ class ChatPanel(QWidget):
         self.send_voice.setEnabled(False)
         QApplication.processEvents()
 
-        model_path = "models/vosk-model-small-cn-0.22"  # 根据你实际路径调整
+        # 加载 vosk 模型
+        voice_cfg = self.config.get_section("voice")
+        model_rel_path = voice_cfg.get("path", "models/vosk-model-small-cn-0.22")
+        model_path = utils.get_abs_path_from_config_path(model_rel_path)
         try:
             model = Model(model_path)
         except Exception as e:

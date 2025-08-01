@@ -10,16 +10,19 @@ logger = logging.getLogger(__name__)
 class AgentService:
     def __init__(self, user_id="default"):
         self._cancel_flag = False
-        # 统一通过配置服务获取配置
         config = ConfigService()
-        conversation_cfg = config.get_section("conversation")
-        user_id = conversation_cfg.get("user_id", "default")
-        history_dir = conversation_cfg.get("history_dir", f"conversation/history/{user_id}")
-        # 将配置参数传给会话管理器
+        conversation_cfg = config.get_section("conversation") or {}
+
+        user_id = conversation_cfg.get("user_id", user_id)
+
+        history_dir_config = conversation_cfg.get("history_dir", f"conversation/history/{user_id}")
+        # 转成绝对路径
+        history_dir = utils.get_abs_path_from_config_path(history_dir_config)
+
+        print(f"AgentService: 初始化会话管理器，user_id={user_id}, history_dir={history_dir}")
         self.manager = ConversationManager(user_id=user_id, history_dir=history_dir)
 
-        # 获取 agent 配置并传给 Agent
-        current_model = config.get_current_model()  # 获取当前模型
+        current_model = config.get_current_model()
         agent_config = config.get_model_config(current_model)
         self.agent = Agent(agent_config)
         self.orchestrator = AgentOrchestrator(self.agent)

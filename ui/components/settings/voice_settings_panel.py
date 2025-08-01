@@ -1,19 +1,20 @@
 from PyQt5.QtWidgets import (
-    QWidget, QVBoxLayout, QLabel, QLineEdit, QPushButton, QFormLayout, QHBoxLayout, QFrame, QMessageBox
+    QWidget, QVBoxLayout, QLabel, QPushButton, QFormLayout,
+    QHBoxLayout, QFrame, QMessageBox
 )
 from PyQt5.QtCore import Qt
 import os
 from utils import utils
 from config_service import ConfigService
 from ui.components.base.popup_dialog import PopupDialog
+from ui.components.base.path_picker import PathPicker
 
 
 class VoiceSettingsPanel(QWidget):
     def __init__(self):
         super().__init__()
         self.config_service = ConfigService()
-        self.model_path_input = QLineEdit()
-
+        self.model_path_picker = PathPicker(mode="file", file_filter="模型文件 (*.bin *.pb);;所有文件 (*.*)")
         self.setup_ui()
         self._load_stylesheet()
         self.load_voice_settings()
@@ -55,15 +56,14 @@ class VoiceSettingsPanel(QWidget):
 
         path_label = QLabel("语音模型路径:")
         path_label.setObjectName("inputLabel")
-        self.model_path_input.setObjectName("styledInput")
 
-        form_layout.addRow(path_label, self.model_path_input)
+        form_layout.addRow(path_label, self.model_path_picker)  # ✅ 用 PathPicker
         content_layout.addLayout(form_layout)
 
         # 保存按钮
         button_layout = QHBoxLayout()
         button_layout.setAlignment(Qt.AlignRight)
-        
+
         self.save_button = QPushButton("保存设置")
         self.save_button.setObjectName("primaryButton")
         self.save_button.setFixedSize(150, 40)
@@ -78,12 +78,12 @@ class VoiceSettingsPanel(QWidget):
     def load_voice_settings(self):
         """加载配置"""
         voice_cfg = self.config_service.get_section("voice") or {}
-        self.model_path_input.setText(voice_cfg.get("path", "models/vosk-model-small-cn-0.22"))
+        self.model_path_picker.setText(voice_cfg.get("path", "models/vosk-model-small-cn-0.22"))
 
     def save_settings(self):
         """保存配置"""
         try:
-            new_path = self.model_path_input.text().strip()
+            new_path = self.model_path_picker.text().strip()
             if not new_path:
                 QMessageBox.warning(self, "警告", "模型路径不能为空")
                 return

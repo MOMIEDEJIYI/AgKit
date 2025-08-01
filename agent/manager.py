@@ -4,18 +4,26 @@ import json
 from datetime import datetime
 import logging
 from utils import utils
-import config
+from config_service import ConfigService
 
 logger = logging.getLogger(__name__)
 
 class ConversationManager:
     def __init__(self, user_id=None, history_dir=None):
-        self.user_id = user_id if user_id is not None else self.config.get("user_id", "default")
-        # 优先使用传入的 history_dir，否则从配置读取或默认生成
+        config_service = ConfigService()
+        conversation_cfg = config_service.get_section("conversation") or {}
+
+        # user_id 优先取传参，否则从配置里拿
+        self.user_id = user_id if user_id is not None else conversation_cfg.get("user_id", "default")
+
+        # history_dir 优先取传参，否则从配置里拿
         if history_dir is not None:
-            self.history_dir = history_dir
+            self.history_dir = os.path.join(history_dir, self.user_id)
         else:
-            self.history_dir = self.config.get("history_dir", f"conversation/history/{self.user_id}")
+            cfg_history_dir = conversation_cfg.get("history_dir", "conversation/history")
+            self.history_dir = os.path.join(cfg_history_dir, self.user_id)
+
+
         os.makedirs(self.history_dir, exist_ok=True)
         self.current_session = None
         self.sessions = self._load_sessions()
@@ -36,7 +44,6 @@ class ConversationManager:
         self._save()
         return file_name
 
-
     def switch_session(self, file_name: str):
         path = os.path.join(self.history_dir, file_name)
         with open(path, "r", encoding="utf-8") as f:
@@ -46,8 +53,6 @@ class ConversationManager:
         return self.current_session["history"]
 
     def add_message(self, role, content):
-        # if role == "system":
-        #     return
         if role == "assistant":
             content = utils.extract_json_from_text(content)
         self.current_session["history"].append({"role": role, "content": content})
