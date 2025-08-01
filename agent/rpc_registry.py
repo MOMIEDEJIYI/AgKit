@@ -13,7 +13,7 @@ if getattr(sys, "frozen", False):
     base_dir = os.path.dirname(sys.executable)
 else:
     # 开发模式：当前文件路径
-    base_dir = os.path.dirname(__file__)
+     base_dir = os.path.dirname(os.path.dirname(__file__))
 
 # 插件目录和快照路径
 PLUGINS_DIR = os.path.join(base_dir, "plugins")
