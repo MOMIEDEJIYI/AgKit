@@ -15,6 +15,7 @@ from PyQt5.QtCore import Qt, QPropertyAnimation, QRect, QEasingCurve
 from agent.worker_thread import WorkerThread
 from agent.agent_service import AgentService
 from ui.components.base.chat_bubble import ChatBubble
+from config_service import ConfigService
 from utils import utils
 
 class ChatPanel(QWidget):
@@ -27,6 +28,8 @@ class ChatPanel(QWidget):
         main_layout = QHBoxLayout(self)
 
         left_layout = QVBoxLayout()
+        
+        self.config = ConfigService()
 
         self.new_session_button = QPushButton("新聊天")
         self.new_session_button.setObjectName("new_session_button")
@@ -204,18 +207,6 @@ class ChatPanel(QWidget):
         if items:
             self.session_list.setCurrentItem(items[0])
 
-    # def on_new_session(self):
-    #     file_name = self.service.manager.create_session("你是遵守 JSON-RPC 2.0 协议的智能助手，返回符合规范的 JSON-RPC 请求。")
-
-    #     display_name = file_name[:15] + "..." if len(file_name) > 15 else file_name
-    #     item = QListWidgetItem(display_name)
-    #     item.setData(Qt.UserRole, file_name)
-
-    #     self.session_list.addItem(item)
-    #     self.service.manager.switch_session(file_name)
-    #     self.load_history()
-    #     self.session_list.setCurrentItem(item)
-
     def load_history(self):
         for i in reversed(range(self.chat_layout.count() - 1)):  # 保留底部弹簧
             widget = self.chat_layout.itemAt(i).widget()
@@ -252,7 +243,9 @@ class ChatPanel(QWidget):
         self.send_button.setEnabled(False)
         self.input_edit.setEnabled(False)
         self.cancel_button.setEnabled(True)
-
+        self.thinking_label.setText("正在思考...")
+        current_model = self.config.get_current_model()
+        self.service.switch_model(current_model)
         self.thread = WorkerThread(user_text, self.service, stream_mode=True)
         self.thread.finished.connect(self.on_agent_response)
         self.thread.error.connect(self.on_agent_error)
