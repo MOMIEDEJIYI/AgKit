@@ -4,14 +4,8 @@
     "default": {
       "provider": "deepseek",
       "model": "deepseek-chat",
-      "api_key": "your_api_key_here",
+      "api_key": "",
       "base_url": "https://api.deepseek.com/v1"
-    },
-    "openai_model": {
-      "provider": "openai",
-      "model": "gpt-3.5-turbo",
-      "api_key": "new_model_api_key",
-      "base_url": "https://api.openai.com/v1"
     },
     "new_model_1": {
       "provider": "deepseek",
@@ -21,9 +15,15 @@
     },
     "new_model_2": {
       "provider": "deepseek",
-      "api_key": "",
       "model": "new_model",
+      "api_key": "",
       "base_url": "https://api.deepseek.com/v1"
+    },
+    "gemini_model": {
+      "provider": "gemini",
+      "model": "gemini-1.5-flash",
+      "api_key": "",
+      "base_url": "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent"
     }
   },
   "conversation": {
