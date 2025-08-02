@@ -192,7 +192,7 @@ class Agent:
       print("请求 URL:", self.base_url)
       system_prompt = self._build_system_prompt(known_methods, extra_prompt)
       messages = self._build_messages(history_messages, system_prompt)
-      print("messages", messages)
+    #   print("messages", messages)
       if self.provider == "gemini":
           try:
               repsonse = self.client.chat(messages)

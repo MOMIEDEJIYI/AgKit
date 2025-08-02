@@ -2,7 +2,27 @@
 
 支持插件机制的智能代理，可通过 CLI 或 GUI 方式运行。
 
+## 当前功能
+
+| 模块         | 功能描述                                                     |
+| ------------ | ------------------------------------------------------------ |
+| **对话管理** | - 多轮对话上下文管理<br>- 支持 CLI / GUI<br>- 支持模型切换（OpenAI、Gemini） |
+| **插件系统** | 插件式，支持文件操作等功能扩展（可进一步补充）               |
+| **图形界面** | - 聊天窗口（气泡式对话展示）<br>- 工具栏（方法快照、导航栏、标题栏）<br>- 设置面板（模型配置、对话配置、语音配置） |
+| **接口服务** | - 基于 FastAPI 的聊天接口<br>- 支持对话创建与管理            |
+
+## 后续功能规划
+
+| 模块           | 规划功能描述                                                 |
+| -------------- | ------------------------------------------------------------ |
+| **集群能力**   | 多 Agent 节点协作：每个节点只负责自己擅长的能力（能力分布式调度） |
+| **插件扩展**   | 增加数据库操作、自动化任务、外部服务接入等更多插件           |
+| **模型支持**   | 扩展接入更多大语言模型（如 Claude、Llama、通义千问等         |
+| **多模态支持** | 支持语音输入输出、图片/文件解析                              |
+
 ---
+
+
 
 ## 快速开始
 
@@ -14,13 +34,11 @@
 pip install -r requirements.txt
 ```
 
-并在根目录添加 `.env` 文件，配置模型 API KEY，PROVIDER值支持deepseek、gemini、openai
+并在根目录的config.json 文件，配置模型的 API KEY
 
-```bash
-PROVIDER=deepseek
-GEMINI_API_KEY=your_key_here
-OPENAI_API_KEY=your_key_here
-```
+provider值支持deepseek、gemini、openai
+
+
 
 ### 2. 启动方式
 
@@ -41,28 +59,26 @@ python main_gui.py
 ### 3.项目结构
 
 ```bash
-agent/            # 核心代理模块：对话管理、RPC 调用等
+├─agent/            # 核心代理模块（对话管理、任务调度、RPC 调用等）
+├─api/              # FastAPI 路由（聊天 / 会话接口）
+├─assets/           # 界面样式资源（QSS）
+├─common/           # 公共模块（错误码等）
+├─model/            # 数据模型（Pydantic Schema）
+├─plugins/          # 插件模块（命令执行 / 报表生成 / 文件操作等）
+├─ui/               # 图形界面（PyQt 组件与窗口）
+├─utils/            # 工具函数
 │
-├─models/         # 模型客户端封装（Gemini，OpenAI系列直接使用包即可）
-├─api/            # FastAPI 路由（聊天 / 会话接口）
-├─common/         # 公共模块（错误码等）
-├─model/          # 数据模型（Pydantic Schema）
-├─plugins/        # 插件模块（执行命令 / 报表生成 / 文件操作）
-│  ├─exec/
-│  ├─network/
-│  ├─report/
-│  └─system/
-├─ui/             # 图形界面（PyQt）
-│  ├─assets/      # 样式资源
-│  └─components/  # 组件封装
-├─utils/          # 工具函数
-├─main_cli.py     # CLI 启动入口
-├─main_gui.py     # GUI 启动入口
-├─rpc_registry.py # 工具方法注册器
-├─config.py       # 配置加载
-├─setup.py        # 打包配置
-├─requirements.txt# 依赖列表
-└─.env            # 环境变量（不提交到 Git）
+├─clear_pycache.py  # 清理缓存脚本
+├─config.json       # 默认配置文件
+├─config_service.py # 配置服务加载器
+├─main_cli.py       # CLI 启动入口
+├─main_gui.py       # GUI 启动入口
+├─setup.py          # 打包配置
+├─requirements.txt  # 依赖列表
+├─test.py           # 测试入口
+├─.gitattributes
+├─.gitignore
+└─README.md
 ```
 
 
@@ -227,11 +243,3 @@ agent/            # 核心代理模块：对话管理、RPC 调用等
 - `exec` 插件需依赖系统已有命令，如 `pip`、`ls` 等，执行失败可能与环境路径或权限有关
 - `network` 插件未验证，等待验证后使用
 - 所有插件支持扩展，若执行行为出现偏差，请确认是否为提示词（prompt）不完整或参数缺失所致（也不排除流程问题哈）
-
-
-
-### 8.后续
-
-- [ ] 请求时支持多模型切换（如 OpenAI / DeepSeek / 自建模型）
-- [ ] 增加插件包完整性验证机制，防止加载不完整或异常插件
-- [ ] 补充测试覆盖未验证插件（如 `exec` / `network`）

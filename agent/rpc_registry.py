@@ -28,24 +28,27 @@ if base_dir not in sys.path:
 
 def register_method(name, param_desc=None, description=None, enabled=True, **flags):
     def decorator(func):
-        if "." not in name:
-            raise ValueError(f"注册的方法名 '{name}' 缺少包名前缀")
         package = name.split(".")[0]
 
-        sig = inspect.signature(func)
-        if len(sig.parameters) == 0:
-            raise ValueError(f"注册的方法 {name} 必须至少接收一个参数")
+        # 默认值来自参数
+        enabled_flag = enabled
+
+        # 如果快照里已经存在这个方法，就用快照里的 enabled 覆盖
+        if name in METHOD_META:
+            enabled_flag = METHOD_META[name].get("enabled", enabled_flag)
 
         METHOD_REGISTRY[name] = func
         METHOD_META[name] = {
             "package": package,
             "description": description or "",
             "params": param_desc or {},
-            "enabled": enabled,
+            "enabled": enabled_flag,
             **flags
         }
+
         if package not in PACKAGE_FLAGS:
             PACKAGE_FLAGS[package] = {"enabled": True}
+
         return func
     return decorator
 
@@ -111,6 +114,14 @@ def init_registry():
         print(f"插件目录不存在，跳过扫描: {PLUGINS_DIR}")
         return
 
+    snapshot_loaded = False
+    if os.path.exists(SNAPSHOT_PATH):
+        try:
+            load_snapshot()
+            snapshot_loaded = True
+        except Exception as e:
+            print(f"加载快照失败，使用默认启用: {e}")
+
     sub_dirs = [d for d in os.listdir(PLUGINS_DIR) if os.path.isdir(os.path.join(PLUGINS_DIR, d))]
     print("扫描路径为：", PLUGINS_DIR)
 
@@ -125,7 +136,10 @@ def init_registry():
                 except Exception as e:
                     print(f"加载模块 {full_module} 失败: {e}")
 
-    save_snapshot()
+    # 如果第一次运行（没加载过快照），需要保存一份初始快照
+    if not snapshot_loaded:
+        save_snapshot()
+
     print(f"已加载 {len(METHOD_REGISTRY)} 个方法")
 
 
