@@ -4,7 +4,7 @@
     "default": {
       "provider": "deepseek",
       "model": "deepseek-chat",
-      "api_key": "sk-b9b21a74ab7d458aaee122da88bd43b7",
+      "api_key": "",
       "base_url": "https://api.deepseek.com/v1"
     },
     "new_model_1": {
@@ -22,7 +22,7 @@
     "gemini_model": {
       "provider": "gemini",
       "model": "gemini-1.5-flash",
-      "api_key": "AIzaSyBxVg9OSupRhrmWB6ZeOmiXmazkQ1H6vog",
+      "api_key": "",
       "base_url": "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent"
     }
   },
