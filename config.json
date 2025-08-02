@@ -27,10 +27,16 @@
     }
   },
   "conversation": {
-    "user_id": "default-1",
+    "user_id": "default",
     "history_dir": "conversation/history/"
   },
   "voice": {
-    "path": "models/vosk-model-small-cn-0.22"
+    "stt": {
+      "path": "models/vosk-model-small-cn-0.22"
+    },
+    "tts": {
+      "enabled": false,
+      "engine": "pyttsx3"
+    }
   }
 }
