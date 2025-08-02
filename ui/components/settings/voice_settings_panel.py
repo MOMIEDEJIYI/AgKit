@@ -1,6 +1,6 @@
 from PyQt5.QtWidgets import (
     QWidget, QVBoxLayout, QLabel, QPushButton, QFormLayout,
-    QHBoxLayout, QFrame, QMessageBox
+    QHBoxLayout, QFrame, QMessageBox, QComboBox, QCheckBox
 )
 from PyQt5.QtCore import Qt
 import os
@@ -14,7 +14,13 @@ class VoiceSettingsPanel(QWidget):
     def __init__(self):
         super().__init__()
         self.config_service = ConfigService()
-        self.model_path_picker = PathPicker(mode="file", file_filter="模型文件 (*.bin *.pb);;所有文件 (*.*)")
+
+        self.stt_path_picker = PathPicker(mode="dir")  # 目录模式
+        self.tts_engine_combo = QComboBox()
+        self.tts_enabled_checkbox = QCheckBox("启用语音输出(TTS)")
+
+        self.tts_engine_combo.addItems(["pyttsx3", "edge-tts"])
+
         self.setup_ui()
         self._load_stylesheet()
         self.load_voice_settings()
@@ -24,75 +30,82 @@ class VoiceSettingsPanel(QWidget):
         main_layout.setContentsMargins(20, 20, 20, 20)
         main_layout.setSpacing(20)
 
-        # 卡片容器
         card_container = QFrame()
         card_container.setObjectName("settingsCard")
         card_layout = QVBoxLayout(card_container)
         card_layout.setContentsMargins(0, 0, 0, 0)
 
-        # 标题
-        header_layout = QHBoxLayout()
-        header_layout.setContentsMargins(20, 15, 20, 15)
         title_label = QLabel("语言设置")
         title_label.setObjectName("cardTitle")
-        header_layout.addWidget(title_label)
-        card_layout.addLayout(header_layout)
-
-        # 分隔线
-        divider = QFrame()
-        divider.setFrameShape(QFrame.HLine)
-        divider.setObjectName("divider")
-        card_layout.addWidget(divider)
-
-        # 内容
-        content_layout = QVBoxLayout()
-        content_layout.setContentsMargins(20, 15, 20, 20)
-        content_layout.setSpacing(15)
+        card_layout.addWidget(title_label)
 
         form_layout = QFormLayout()
         form_layout.setLabelAlignment(Qt.AlignRight)
         form_layout.setVerticalSpacing(10)
         form_layout.setHorizontalSpacing(15)
 
-        path_label = QLabel("语音模型路径:")
-        path_label.setObjectName("inputLabel")
+        # STT模型路径
+        form_layout.addRow(QLabel("语音识别模型路径(STT):"), self.stt_path_picker)
+        # TTS使能
+        form_layout.addRow(self.tts_enabled_checkbox)
+        # TTS引擎选择
+        form_layout.addRow(QLabel("语音合成引擎(TTS):"), self.tts_engine_combo)
 
-        form_layout.addRow(path_label, self.model_path_picker)  # ✅ 用 PathPicker
-        content_layout.addLayout(form_layout)
+        card_layout.addLayout(form_layout)
 
         # 保存按钮
         button_layout = QHBoxLayout()
         button_layout.setAlignment(Qt.AlignRight)
-
         self.save_button = QPushButton("保存设置")
-        self.save_button.setObjectName("primaryButton")
         self.save_button.setFixedSize(150, 40)
+        self.save_button.setObjectName("primaryButton")
         self.save_button.clicked.connect(self.save_settings)
         button_layout.addWidget(self.save_button)
 
-        content_layout.addLayout(button_layout)
-        card_layout.addLayout(content_layout)
-
+        card_layout.addLayout(button_layout)
         main_layout.addWidget(card_container)
 
     def load_voice_settings(self):
-        """加载配置"""
         voice_cfg = self.config_service.get_section("voice") or {}
-        self.model_path_picker.setText(voice_cfg.get("path", "models/vosk-model-small-cn-0.22"))
+
+        stt_cfg = voice_cfg.get("stt", {})
+        tts_cfg = voice_cfg.get("tts", {})
+
+        self.stt_path_picker.setText(stt_cfg.get("path", "models/vosk-model-small-cn-0.22"))
+        self.tts_enabled_checkbox.setChecked(tts_cfg.get("enabled", False))
+        engine = tts_cfg.get("engine", "pyttsx3")
+        idx = self.tts_engine_combo.findText(engine)
+        if idx >= 0:
+            self.tts_engine_combo.setCurrentIndex(idx)
 
     def save_settings(self):
-        """保存配置"""
-        try:
-            new_path = self.model_path_picker.text().strip()
-            if not new_path:
-                QMessageBox.warning(self, "警告", "模型路径不能为空")
-                return
+      try:
+          stt_path = self.stt_path_picker.text().strip()
+          if not stt_path:
+              QMessageBox.warning(self, "警告", "语音识别模型路径不能为空")
+              return
 
-            self.config_service.set_section("voice", {"path": new_path})
-            self.config_service.save()
-            PopupDialog(title="成功", message="语音设置已保存!").exec_()
-        except Exception as e:
-            QMessageBox.critical(self, "保存失败", str(e))
+          tts_enabled = self.tts_enabled_checkbox.isChecked()
+          tts_engine = self.tts_engine_combo.currentText()
+
+          new_cfg = {
+              "stt": {
+                  "path": stt_path
+              },
+              "tts": {
+                  "enabled": tts_enabled,
+                  "engine": tts_engine
+              }
+          }
+
+          self.config_service.set_section("voice", new_cfg)
+          self.config_service.save()
+
+          dlg = PopupDialog(title="成功", message="语音设置已保存！")
+          dlg.exec_()
+
+      except Exception as e:
+          QMessageBox.critical(self, "保存失败", str(e))
 
     def _load_stylesheet(self):
         qss_path = utils.resource_path("assets/styles/settings/voice_settings_panel.qss")

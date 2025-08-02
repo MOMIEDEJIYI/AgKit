@@ -14,6 +14,7 @@ import json
 from PyQt5.QtCore import Qt, QPropertyAnimation, QRect, QEasingCurve
 from agent.worker_thread import WorkerThread
 from agent.agent_service import AgentService
+from agent.voice_manager import VoiceManager
 from ui.components.base.chat_bubble import ChatBubble
 from config_service import ConfigService
 from utils import utils
@@ -88,13 +89,16 @@ class ChatPanel(QWidget):
 
         # 语音识别模型路径
         voice_cfg = self.config.get_section("voice")
-        model_rel_path = voice_cfg.get("path", "models/vosk-model-small-cn-0.22")
-        model_path = utils.get_abs_path_from_config_path(model_rel_path)
+        stt_path = utils.get_abs_path_from_config_path(voice_cfg.get("stt", {}).get("path", ""))
+        tts_engine = voice_cfg.get("tts", {}).get("engine", "pyttsx3")
+        tts_enabled = voice_cfg.get("tts", {}).get("enabled", True)
 
-        # 检查模型是否存在
-        if not os.path.exists(model_path) or not os.path.exists(os.path.join(model_path, "conf")):
+        self.voice = VoiceManager(stt_config={"path": stt_path}, tts_engine=tts_engine, tts_enabled=tts_enabled)
+
+        # 检查语音输入可用
+        if not self.voice.stt_model:
             self.send_voice.setEnabled(False)
-            self.send_voice.setToolTip("未检测到语音模型，请下载后放入 models 目录")
+            self.send_voice.setToolTip("未检测到语音输入模型")
         else:
             self.send_voice.setEnabled(True)
 
@@ -271,6 +275,14 @@ class ChatPanel(QWidget):
 
         last_msg = self.service.manager.get_history()[-1]["content"]
 
+        # 播放语音（仅当启用时）
+        voice_cfg = self.config.get_section("voice")
+        tts_enabled = voice_cfg.get("tts", {}).get("enabled", False)
+        if tts_enabled and self.voice and last_msg.strip():
+            try:
+                self.voice.speak(last_msg)   # 调用 VoiceManager 的 TTS
+            except Exception as e:
+                print(f"TTS 播放失败: {e}")
         # 尝试解析为 JSON-RPC 响应
         try:
             parsed = json.loads(last_msg)
@@ -386,44 +398,11 @@ class ChatPanel(QWidget):
         self.send_voice.setEnabled(False)
         QApplication.processEvents()
 
-        # 加载 vosk 模型
-        voice_cfg = self.config.get_section("voice")
-        model_rel_path = voice_cfg.get("path", "models/vosk-model-small-cn-0.22")
-        model_path = utils.get_abs_path_from_config_path(model_rel_path)
         try:
-            model = Model(model_path)
+            text = self.voice.listen(duration=5)  # 录音 5 秒
+            self.input_edit.setText(text if text else "（未识别到语音）")
         except Exception as e:
-            QMessageBox.critical(self, "错误", f"模型加载失败：{e}")
-            self.send_voice.setText("语言输入")
-            self.send_voice.setEnabled(True)
-            return
-
-        q = queue.Queue()
-
-        def callback(indata, frames, time, status):
-            if status:
-                print(status, flush=True)
-            q.put(bytes(indata))
-
-        try:
-            with sd.RawInputStream(samplerate=16000, blocksize=8000, dtype='int16',
-                                channels=1, callback=callback):
-                rec = KaldiRecognizer(model, 16000)
-
-                self.thinking_label.setText("识别中，请说话...")
-
-                for i in range(100):  # 最多录约5秒
-                    data = q.get()
-                    if rec.AcceptWaveform(data):
-                        break
-
-                result = json.loads(rec.FinalResult())
-                text = result.get("text", "")
-                self.input_edit.setText(text if text else "（未识别到语音）")
-
-        except Exception as e:
-            QMessageBox.critical(self, "错误", f"录音失败：{e}")
+            QMessageBox.critical(self, "错误", f"语音识别失败：{e}")
         finally:
             self.send_voice.setText("语言输入")
             self.send_voice.setEnabled(True)
-            self.thinking_label.setText("")
