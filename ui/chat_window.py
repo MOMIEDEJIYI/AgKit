@@ -1,5 +1,6 @@
 import sys
 import os
+import importlib
 import platform
 from PyQt5.QtWidgets import (
     QMainWindow, QWidget, QPushButton, QLabel,
@@ -12,7 +13,24 @@ from ui.components.chat_panel import ChatPanel
 from ui.components.method_snapshot import MethodSnapshotPanel
 from ui.components.title_bar import TitleBar
 from ui.components.settings.settings_panel import SettingsPanel  # 你自己的设置页
+from agent.rpc_registry import PLUGINS_DIR
+def load_plugin_ui(chat_window):
+    plugins_dir = PLUGINS_DIR
+    plugin_names = [name for name in os.listdir(plugins_dir)
+                    if os.path.isdir(os.path.join(plugins_dir, name)) and not name.startswith("__")]
 
+    for name in plugin_names:
+        try:
+            mod = importlib.import_module(f"plugins.{name}.ui")
+            if hasattr(mod, "get_ui_pages"):
+                pages = mod.get_ui_pages()
+                for key, widget, icon, text, bottom in pages:
+                    chat_window.register_page(key, widget, icon, text, bottom)
+        except ModuleNotFoundError:
+            # 没有 ui.py 的插件跳过
+            pass
+        except Exception as e:
+            print(f"加载插件UI失败 {name}: {e}")    
 class ChatWindow(QMainWindow):
     def __init__(self):
         super().__init__()
@@ -28,7 +46,6 @@ class ChatWindow(QMainWindow):
         main_layout.setContentsMargins(0, 0, 0, 0)
         main_layout.setSpacing(0)
 
-        # 只给内容区设置白色背景和圆角，不给整个窗口
         content_widget = QWidget()
         content_widget.setObjectName("content_widget")
         content_layout = QHBoxLayout(content_widget)
@@ -41,17 +58,14 @@ class ChatWindow(QMainWindow):
 
         self.content_area = QStackedWidget()
         self.content_area.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
-        self.chat_panel = ChatPanel()
-        self.method_snapshot_panel = MethodSnapshotPanel()
-        self.settings_panel = SettingsPanel()
 
-        self.pages = {
-            "chat": self.chat_panel,
-            "method_snapshot": self.method_snapshot_panel,
-            "settings": self.settings_panel
-        }
-        for widget in self.pages.values():
-            self.content_area.addWidget(widget)
+        self.pages = {}  # 动态注册页面
+
+        # 注册默认页面和按钮
+        self.register_page("chat", ChatPanel(), "💬", "会话")
+        self.register_page("method_snapshot", MethodSnapshotPanel(), "⚙️", "快照")
+        self.register_page("settings", SettingsPanel(), "🛠️", "设置", bottom=True)
+        load_plugin_ui(self)  
         content_layout.addWidget(self.content_area)
 
         self.title_bar = TitleBar(self)
@@ -65,6 +79,12 @@ class ChatWindow(QMainWindow):
 
         self.load_stylesheet()
         self.switch_page("chat")
+
+    def register_page(self, key, widget, icon, text, bottom=False):
+        """注册导航页面和对应按钮"""
+        self.pages[key] = widget
+        self.content_area.addWidget(widget)
+        self.navbar.add_button(key, icon, text, bottom)
 
     def apply_blur_effect(self):
         system = platform.system()

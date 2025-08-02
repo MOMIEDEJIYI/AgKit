@@ -1,0 +1,15 @@
+{
+  "enabled": true,
+  "nodes": {
+    "report": {
+      "url": "http://127.0.0.1:5001",
+      "description": "负责生成销售报表、财务报表等与数据分析相关的任务",
+      "enabled": true
+    },
+    "exec": {
+      "url": "http://127.0.0.1:5002",
+      "description": "负责执行系统命令、脚本运行、远程调用等运维相关任务",
+      "enabled": true
+    }
+  }
+}

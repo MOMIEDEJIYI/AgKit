@@ -9,31 +9,22 @@ METHOD_META = {}      # 方法元信息：描述、参数、enabled、package
 PACKAGE_FLAGS = {}    # 包级开关：{"pkg": {"enabled": True/False}}
 
 if getattr(sys, "frozen", False):
-    # 打包模式：获取 exe 所在目录
     base_dir = os.path.dirname(sys.executable)
 else:
-    # 开发模式：当前文件路径
-     base_dir = os.path.dirname(os.path.dirname(__file__))
+    base_dir = os.path.dirname(os.path.dirname(__file__))
 
-# 插件目录和快照路径
 PLUGINS_DIR = os.path.join(base_dir, "plugins")
 SNAPSHOT_PATH = os.path.join(base_dir, "runtime", "method_registry_snapshot.json")
 
-# 插入 sys.path 以便 import plugins.xxx
 if PLUGINS_DIR not in sys.path:
     sys.path.insert(0, PLUGINS_DIR)
 if base_dir not in sys.path:
     sys.path.insert(0, base_dir)
 
-
 def register_method(name, param_desc=None, description=None, enabled=True, **flags):
     def decorator(func):
         package = name.split(".")[0]
-
-        # 默认值来自参数
         enabled_flag = enabled
-
-        # 如果快照里已经存在这个方法，就用快照里的 enabled 覆盖
         if name in METHOD_META:
             enabled_flag = METHOD_META[name].get("enabled", enabled_flag)
 
@@ -52,7 +43,6 @@ def register_method(name, param_desc=None, description=None, enabled=True, **fla
         return func
     return decorator
 
-
 def save_snapshot():
     os.makedirs(os.path.dirname(SNAPSHOT_PATH), exist_ok=True)
 
@@ -64,8 +54,11 @@ def save_snapshot():
     if missing_desc:
         print("以下方法缺少描述（description）不利于模型理解，请为每个方法添加描述后重试：")
         for name in missing_desc:
-            func = METHOD_REGISTRY[name]
-            print(f" - {name}: {func.__module__}.{func.__name__}")
+            func = METHOD_REGISTRY.get(name)
+            if func:
+                print(f" - {name}: {func.__module__}.{func.__name__}")
+            else:
+                print(f" - {name}: <函数未注册>")
         sys.exit(1)
 
     snapshot = {
@@ -76,21 +69,8 @@ def save_snapshot():
         json.dump(snapshot, f, ensure_ascii=False, indent=2)
     print(f"方法注册快照已保存到 {SNAPSHOT_PATH}")
 
-
-def infer_module_from_method(method_name):
-    """
-    假设快照里的方法名格式：
-    - 带子目录，如 "system.read_files"
-    - 不带子目录，默认归到 "system" 子目录
-    """
-    if '.' in method_name:
-        return f"plugins.{method_name}"
-    else:
-        return f"plugins.system.{method_name}"
-
-
 def load_snapshot():
-    global METHOD_META, PACKAGE_FLAGS
+    global METHOD_META, PACKAGE_FLAGS, METHOD_REGISTRY
     if not os.path.exists(SNAPSHOT_PATH):
         raise FileNotFoundError(f"快照文件不存在：{SNAPSHOT_PATH}")
     with open(SNAPSHOT_PATH, "r", encoding="utf-8") as f:
@@ -98,8 +78,8 @@ def load_snapshot():
 
     METHOD_META.clear()
     PACKAGE_FLAGS.clear()
+    METHOD_REGISTRY.clear()
 
-    # 从快照加载
     packages = snapshot.get("packages", {})
     methods = snapshot.get("methods", {})
 
@@ -108,6 +88,22 @@ def load_snapshot():
 
     print(f"从快照加载了 {len(METHOD_META)} 个方法")
 
+def clean_snapshot_methods():
+    """
+    清理快照中已不存在于 METHOD_REGISTRY 的方法，
+    确保快照与当前扫描插件保持一致，防止遗留无效方法。
+    """
+    # 当前扫描到的方法名集合
+    actual_methods = set(METHOD_REGISTRY.keys())
+    # 快照中方法名集合
+    snapshot_methods = set(METHOD_META.keys())
+
+    removed = snapshot_methods - actual_methods
+    if removed:
+        for name in removed:
+            METHOD_META.pop(name, None)
+        print(f"清理了 {len(removed)} 个已删除的快照方法: {removed}")
+        save_snapshot()
 
 def init_registry():
     if not os.path.isdir(PLUGINS_DIR):
@@ -136,18 +132,18 @@ def init_registry():
                 except Exception as e:
                     print(f"加载模块 {full_module} 失败: {e}")
 
-    # 如果第一次运行（没加载过快照），需要保存一份初始快照
     if not snapshot_loaded:
         save_snapshot()
+    else:
+        # 快照已加载，扫描后清理已删除方法
+        clean_snapshot_methods()
 
     print(f"已加载 {len(METHOD_REGISTRY)} 个方法")
-
 
 def is_dev_mode():
     return not getattr(sys, "frozen", False)
 
-
-# ==== 开关控制 API ====
+# 以下是开关控制代码保持不变
 from utils.event_bus import event_bus
 def disable_method(method_name):
     if method_name in METHOD_META:
