@@ -32,20 +32,26 @@ class SettingsPanel(QWidget):
         scroll_layout.setContentsMargins(10, 10, 10, 10)
         scroll_layout.setSpacing(20)
 
-        # 添加面板
+        # ==========添加面板============
+        # 模型设置
         self.model_settings = ModelSettingsPanel()
         self.model_settings.setObjectName("modelSettingsCard")
         scroll_layout.addWidget(self.model_settings)
 
+        # 会话设置
         self.conversation_settings = ConversationSettingsPanel()
         self.conversation_settings.setObjectName("conversationSettingsCard")
         scroll_layout.addWidget(self.conversation_settings)
 
+        # 语音设置
         self.voice_settings = VoiceSettingsPanel()
         self.voice_settings.setObjectName("voiceSettingsCard")
         scroll_layout.addWidget(self.voice_settings)
-        
         scroll_layout.addStretch()  # 增加底部空间
+
+        # 系统设置（待添加）
+
+
 
         # 设置容器到滚动区域
         scroll_area.setWidget(scroll_container)
