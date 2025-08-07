@@ -126,6 +126,6 @@ class VoiceManager:
             return ""
 
     def _listen_whisper(self, duration):
-        # 这里放你调用whisper的录音和识别流程
+        # 调用whisper的录音和识别流程
         print("Whisper 识别暂未实现")
         return ""

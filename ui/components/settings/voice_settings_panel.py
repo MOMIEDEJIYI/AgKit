@@ -4,6 +4,7 @@ from PyQt5.QtWidgets import (
 )
 from PyQt5.QtCore import Qt
 import os
+from utils.event_bus import event_bus
 from utils import utils
 from config_service import ConfigService
 from ui.components.base.popup_dialog import PopupDialog
@@ -15,7 +16,7 @@ class VoiceSettingsPanel(QWidget):
         super().__init__()
         self.config_service = ConfigService()
 
-        self.stt_path_picker = PathPicker(mode="dir")  # 目录模式
+        self.stt_path_picker = PathPicker(mode="directory")  # 目录模式
         self.tts_engine_combo = QComboBox()
         self.tts_enabled_checkbox = QCheckBox("启用语音输出(TTS)")
 
@@ -101,6 +102,9 @@ class VoiceSettingsPanel(QWidget):
           self.config_service.set_section("voice", new_cfg)
           self.config_service.save()
 
+          # 发布事件，通知其他模块更新语音配置
+          event_bus.publish("voice_settings_changed")
+          
           dlg = PopupDialog(title="成功", message="语音设置已保存！")
           dlg.exec_()
 

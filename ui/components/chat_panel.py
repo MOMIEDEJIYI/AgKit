@@ -18,6 +18,7 @@ from agent.voice_manager import VoiceManager
 from ui.components.base.chat_bubble import ChatBubble
 from config_service import ConfigService
 from utils import utils
+from utils.event_bus import event_bus
 
 class ChatPanel(QWidget):
     def __init__(self):
@@ -103,6 +104,8 @@ class ChatPanel(QWidget):
             self.send_voice.setEnabled(True)
 
         self.send_voice.clicked.connect(self.recognize_voice_input)
+        # 订阅语音设置变更事件
+        event_bus.subscribe("voice_settings_changed", self.reload_voice_model)
 
         input_layout.addWidget(self.input_edit)
         input_layout.addWidget(self.send_voice)
@@ -406,3 +409,23 @@ class ChatPanel(QWidget):
         finally:
             self.send_voice.setText("语言输入")
             self.send_voice.setEnabled(True)
+    def reload_voice_model(self):
+        print("收到语音设置变更事件，重新加载模型...")
+        voice_cfg = self.config.get_section("voice") or {}
+        stt_path = utils.get_abs_path_from_config_path(voice_cfg.get("stt", {}).get("path", ""))
+        tts_engine = voice_cfg.get("tts", {}).get("engine", "pyttsx3")
+        tts_enabled = voice_cfg.get("tts", {}).get("enabled", True)
+
+        self.voice = VoiceManager(stt_config={"path": stt_path}, tts_engine=tts_engine, tts_enabled=tts_enabled)
+
+        if not self.voice.stt_model:
+            self.send_voice.setEnabled(False)
+            self.send_voice.setToolTip("未检测到语音输入模型")
+        else:
+            self.send_voice.setEnabled(True)
+            self.send_voice.setToolTip("")
+
+    def closeEvent(self, event):
+        event_bus.unsubscribe("voice_settings_changed", self.reload_voice_model)
+        super().closeEvent(event)
+
