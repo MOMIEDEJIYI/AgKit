@@ -1,6 +1,6 @@
 from PyQt5.QtWidgets import (
     QWidget, QVBoxLayout, QLabel, QScrollArea, QFrame, QListWidget, QListWidgetItem,
-    QHBoxLayout, QPushButton, QSizePolicy
+    QHBoxLayout, QPushButton, QSizePolicy, QTextBrowser
 )
 from PyQt5.QtCore import Qt
 import os
@@ -189,65 +189,87 @@ class MethodSnapshotPanel(QWidget):
         description = meta.get("description", "无描述")
         params = meta.get("params", {})
 
-        # 方法名 + 状态 + 开关按钮
+        # -----------------------
+        # 方法名 + 状态 + 按钮
+        # -----------------------
         method_header = QWidget()
         method_header_layout = QHBoxLayout(method_header)
         method_header_layout.setContentsMargins(0, 0, 0, 0)
         method_header_layout.setSpacing(10)
 
-        # 方法名容器，保证换行
-        method_label_container = QWidget()
-        method_label_layout = QVBoxLayout(method_label_container)
-        method_label_layout.setContentsMargins(0, 0, 0, 0)
-        method_label = QLabel(method_name)
+        # 方法名用 QTextBrowser 自动换行 + 高度自适应
+        method_label = QTextBrowser()
         method_label.setObjectName("methodName")
-        method_label.setWordWrap(True)
-        method_label.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
+        method_label.setText(method_name)
+        method_label.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        method_label.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        method_label.setStyleSheet("background: transparent; border: none;")
         method_label.setTextInteractionFlags(Qt.TextSelectableByMouse)
-        if not enabled:
-            method_label.setStyleSheet("color: gray;")
-        method_label_layout.addWidget(method_label)
+        method_label.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
 
+        # 去掉 widget 内边距
+        method_label.setContentsMargins(0, 0, 0, 0)
+
+        # 去掉 QTextDocument 的默认边距
+        doc = method_label.document()
+        doc.setDocumentMargin(0)
+
+        if not enabled:
+            method_label.setStyleSheet("color: gray; background: transparent; border: none;")
+        # 根据内容调整 QTextBrowser 高度
+        def adjust_method_label_height():
+            method_label.document().setTextWidth(method_label.viewport().width())
+            doc_height = method_label.document().size().height()
+            method_label.setFixedHeight(int(doc_height) + 2)
+
+        method_header.resizeEvent = lambda event: adjust_method_label_height()
+        adjust_method_label_height()
+
+        # 状态标签
         method_status = QLabel("启用中" if enabled else "已禁用")
         method_status.setObjectName("methodStatus")
+        method_status.setFixedWidth(40)
         method_status.setStyleSheet("color: #38a169;" if enabled else "color: #e53e3e;")
 
+        # 按钮
         toggle_btn = QPushButton("禁用" if enabled else "启用")
         toggle_btn.setFixedWidth(60)
 
+        # 添加到水平布局，状态和按钮顶对齐
+        method_header_layout.addWidget(method_label, 1)
+        method_header_layout.addWidget(method_status, 0, Qt.AlignTop)
+        method_header_layout.addWidget(toggle_btn, 0, Qt.AlignTop)
+
+        # 按钮逻辑
         def on_toggle():
             if toggle_btn.text() == "启用":
                 enable_method(method_name)
                 toggle_btn.setText("禁用")
                 method_status.setText("启用中")
                 method_status.setStyleSheet("color: #38a169;")
-                method_label.setStyleSheet("")
+                method_label.setStyleSheet("background: transparent; border: none;")
             else:
                 disable_method(method_name)
                 toggle_btn.setText("启用")
                 method_status.setText("已禁用")
                 method_status.setStyleSheet("color: #e53e3e;")
-                method_label.setStyleSheet("color: gray;")
+                method_label.setStyleSheet("color: gray; background: transparent; border: none;")
 
         toggle_btn.clicked.connect(on_toggle)
-
-        method_header_layout.addWidget(method_label_container, 1)
-        method_header_layout.addWidget(method_status, 0)
-        method_header_layout.addWidget(toggle_btn, 0)
         method_card_layout.addWidget(method_header)
 
-        # 描述容器，保证换行
-        desc_container = QWidget()
-        desc_layout = QVBoxLayout(desc_container)
-        desc_layout.setContentsMargins(0, 0, 0, 0)
+        # -----------------------
+        # 描述
+        # -----------------------
         desc_label = QLabel(f"描述: {description}")
         desc_label.setObjectName("description")
         desc_label.setWordWrap(True)
         desc_label.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
-        desc_layout.addWidget(desc_label)
-        method_card_layout.addWidget(desc_container)
+        method_card_layout.addWidget(desc_label)
 
-        # 参数（多行）
+        # -----------------------
+        # 参数
+        # -----------------------
         if params:
             param_title = QLabel("参数:")
             param_title.setObjectName("paramTitle")
@@ -261,7 +283,6 @@ class MethodSnapshotPanel(QWidget):
             method_card_layout.addWidget(params_label)
 
         return method_card
-
 
     def _refresh_package_methods(self, pkg_name, enabled):
         if pkg_name not in self.package_widgets:
