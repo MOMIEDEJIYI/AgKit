@@ -134,10 +134,10 @@ def init_registry():
                 except Exception as e:
                     print(f"加载模块 {full_module} 失败: {e}")
 
-    if not snapshot_loaded:
-        save_snapshot()
-    else:
-        # 快照已加载，扫描后清理已删除方法
+    # 扫描完插件后总是保存快照
+    save_snapshot()
+    # 如果快照之前已加载，可以清理已删除的方法
+    if snapshot_loaded:
         clean_snapshot_methods()
 
     print(f"已加载 {len(METHOD_REGISTRY)} 个方法")
