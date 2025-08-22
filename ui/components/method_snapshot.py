@@ -7,13 +7,15 @@ import os
 import json
 from utils import utils
 from agent.rpc_registry import enable_method, disable_method, enable_package, disable_package
-
+from utils.event_bus import event_bus
 
 class MethodSnapshotPanel(QWidget):
     def __init__(self):
         super().__init__()
 
         self.setObjectName("methodSnapshotPanel")
+        # 订阅更新事件
+        event_bus.subscribe("methods_updated", self.load_method_snapshot)
 
         # 主布局
         main_layout = QVBoxLayout(self)
@@ -75,7 +77,7 @@ class MethodSnapshotPanel(QWidget):
 
         self.load_stylesheet()
 
-    def load_method_snapshot(self):
+    def load_method_snapshot(self, **kwargs):
         snapshot_path = utils.resource_path("runtime/method_registry_snapshot.json")
         if not os.path.exists(snapshot_path):
             label = QLabel(f"方法快照文件不存在: {snapshot_path}")
