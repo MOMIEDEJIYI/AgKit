@@ -3,6 +3,8 @@ import json
 import importlib
 import sys
 import inspect
+from watchdog.observers import Observer
+from watchdog.events import FileSystemEventHandler
 
 METHOD_REGISTRY = {}
 METHOD_META = {}      # 方法元信息：描述、参数、enabled、package
@@ -140,10 +142,85 @@ def init_registry():
 
     print(f"已加载 {len(METHOD_REGISTRY)} 个方法")
 
+def refresh_methods_after_hotplug():
+    """
+    重新扫描 METHOD_REGISTRY / METHOD_META，清理已删除方法，更新快照，并发布事件
+    """
+    from agent.rpc_registry import clean_snapshot_methods, save_snapshot
+
+    # 加载快照到 METHOD_META
+    save_snapshot()
+
+    # 清理已不存在的方法
+    clean_snapshot_methods()
+
+    # 发布事件通知 UI 刷新
+    event_bus.publish("methods_updated", source="hotplug")
+
+class PluginFolderWatcher(FileSystemEventHandler):
+    def on_created(self, event):
+        if event.is_directory or not event.src_path.endswith(".py"):
+            return
+        module_name = get_module_name(event.src_path)
+        print(f"[Hotplug] 新插件创建: {module_name}")
+        try:
+            importlib.import_module(module_name)
+            print(f"[Hotplug] 已加载模块: {module_name}")
+            refresh_methods_after_hotplug()
+        except Exception as e:
+            print(f"[Hotplug] 加载失败: {module_name} -> {e}")
+
+    def on_modified(self, event):
+        if event.is_directory or not event.src_path.endswith(".py"):
+            return
+        module_name = get_module_name(event.src_path)
+        print(f"[Hotplug] 插件修改: {module_name}")
+        try:
+            importlib.reload(importlib.import_module(module_name))
+            print(f"[Hotplug] 模块已刷新: {module_name}")
+            refresh_methods_after_hotplug()
+        except Exception as e:
+            print(f"[Hotplug] 刷新失败: {module_name} -> {e}")
+
+    def on_moved(self, event):
+        if event.is_directory or not event.src_path.endswith(".py"):
+            return
+        module_name = get_module_name(event.src_path)
+        print(f"[Hotplug] 插件移动: {module_name}")
+        if module_name in sys.modules:
+            del sys.modules[module_name]
+            print(f"[Hotplug] 模块已卸载: {module_name}")
+        refresh_methods_after_hotplug()
+
+    def on_deleted(self, event):
+        if event.is_directory or not event.src_path.endswith(".py"):
+            return
+        module_name = get_module_name(event.src_path)
+        print(f"[Hotplug] 插件删除: {module_name}")
+        if module_name in sys.modules:
+            del sys.modules[module_name]
+            print(f"[Hotplug] 模块已卸载: {module_name}")
+        refresh_methods_after_hotplug()
+
+def get_module_name(file_path: str):
+    rel_path = os.path.relpath(file_path, PLUGINS_DIR)
+    rel_path = rel_path.replace(os.path.sep, ".")
+    return rel_path[:-3]  # 去掉 .py
+
+def start_hotplug():
+    event_handler = PluginFolderWatcher()
+    observer = Observer()
+    observer.schedule(event_handler, PLUGINS_DIR, recursive=True)
+    observer.start()
+    print("[Hotplug] 监听启动")
+    print("[Hotplug] 监听目录:", PLUGINS_DIR)
+    return observer  # 方便后续 stop
+
+
 def is_dev_mode():
     return not getattr(sys, "frozen", False)
 
-# 以下是开关控制代码保持不变
+# 以下是开关控制代码保持不变，AgentService订阅该事件更新方法更新后给agent使用
 from utils.event_bus import event_bus
 def disable_method(method_name):
     if method_name in METHOD_META:
